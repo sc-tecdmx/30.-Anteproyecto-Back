@@ -1,0 +1,47 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    /**
+     * Run the migrations.
+     *
+     * @return void
+     */
+    public function up()
+    {
+        Schema::create('detalles_contratos', function (Blueprint $table) {
+            $table->bigIncrements('id');
+            $table->unsignedBigInteger('contrato_ejercicio_id');
+            $table->float('cantidad');
+            $table->double('costo_unitario');
+            $table->unsignedBigInteger('unidad_medida_id');
+            $table->timestamps();
+
+            $table->foreign('contrato_ejercicio_id')
+                ->references('id')
+                ->on('contrato_ejercicio')
+                ->onUpdate('cascade')
+                ->onDelete('restrict');
+
+            $table->foreign('unidad_medida_id')
+                ->references('id')
+                ->on('unidades_medida')
+                ->onUpdate('cascade')
+                ->onDelete('restrict');
+        });
+    }
+
+    /**
+     * Reverse the migrations.
+     *
+     * @return void
+     */
+    public function down()
+    {
+        Schema::dropIfExists('detalles_contratos');
+    }
+};
