@@ -363,21 +363,29 @@ class ContratoController extends Controller
         if(!$exercise) return response(["message" => "No existe el ejercicio"], Response::HTTP_UNPROCESSABLE_ENTITY);
 
         $request->validate([
-            'mes_id' => 'required',
-            'costo' => 'required'
+            '*.mes_id' => 'required',
+            '*.costo' => 'required'
         ]);
 
         $agreementExercise = ContratoEjercicio::where('contrato_id', $id)->where('ejercicio_id', $exercise)->first();
 
         if(!$agreementExercise) return response(["message" => "No hay contrato en este ejercicio"], Response::HTTP_UNPROCESSABLE_ENTITY);
 
-        $execution = new ContratoEjecucion();
+        $executions = [];
+
+        foreach ($request->all() as $data) {
+            $execution = ContratoEjecucion::find($data['id']);
+            $execution->costo = $data['costo'] ?? 0;
+            $execution->save();
+            $executions[] = $execution;
+        }
+        /* $execution = new ContratoEjecucion();
         $execution->contrato_ejercicio_id = $agreementExercise->id;
         $execution->mes_id = $request->mes_id;
         $execution->costo = $request->costo;
-        $execution->save();
+        $execution->save(); */
 
-        return response()->json($execution, Response::HTTP_CREATED);
+        return response()->json($executions, Response::HTTP_CREATED);
     }
 
     // Ver ejecucion
