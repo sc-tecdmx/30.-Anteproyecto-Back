@@ -138,6 +138,7 @@ Route::group(['prefix' => 'v1/', 'namespace' => 'Api'], function () {
     Route::prefix('contratos')->group(function () {
         Route::get('/', [ContratoController::class, 'index']);
         Route::get('/claves-programaticas', [ContratoController::class, 'programaticKeys']);
+        Route::get('/plantilla', [ImportController::class, 'downloadTemplate']);
         Route::get('/{id}', [ContratoController::class, 'show']);
         Route::get('/{id}/ejecucion', [ContratoController::class, 'months']);
         Route::get('/{id}/seleccionar', [ContratoController::class, 'select']);
