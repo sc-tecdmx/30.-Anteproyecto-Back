@@ -29,7 +29,7 @@ return new class extends Migration
 
             $table->foreign('unidad_medida_id')
                 ->references('id')
-                ->on('unidades_medida')
+                ->on('unidades_medida_anteproyecto')
                 ->onUpdate('cascade')
                 ->onDelete('restrict');
         });
