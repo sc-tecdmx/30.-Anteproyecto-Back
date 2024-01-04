@@ -74,7 +74,8 @@ class EjercicioController extends Controller
 
     public function scenarios($id)
     {
-        $scenarios = ContratoEjercicio::where('ejercicio_id', $id)->get();
+        $scenarios = ContratoEjercicio::where('ejercicio_id', $id)->select('escenario') // Reemplaza 'nombre_del_campo' con el nombre del campo que quieres que sea diferente
+        ->distinct()->get();
 
         if(!$scenarios) return response(["message" => "No existe el ejercicio"], Response::HTTP_UNPROCESSABLE_ENTITY);
 
