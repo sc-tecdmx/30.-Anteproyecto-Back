@@ -239,6 +239,9 @@ CREATE TABLE `contrato_ejercicio` (
   `id` bigint unsigned NOT NULL AUTO_INCREMENT,
   `ejercicio_id` bigint unsigned NOT NULL,
   `contrato_id` bigint unsigned NOT NULL,
+  `escenario` int NOT NULL,
+  `cerrado` tinyint(1) NOT NULL,
+  `seleccionado` tinyint(1) NOT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
   PRIMARY KEY (`id`),
@@ -253,12 +256,12 @@ LOCK TABLES `contrato_ejercicio` WRITE;
 
 INSERT INTO `contrato_ejercicio` (`id`, `ejercicio_id`, `contrato_id`, `created_at`, `updated_at`)
 VALUES
-	(5,13,5,'2023-12-01 19:50:25','2023-12-01 19:50:25'),
-	(6,13,6,'2023-12-01 20:16:08','2023-12-01 20:16:08'),
-	(7,13,7,'2023-12-01 20:18:51','2023-12-01 20:18:51'),
-	(8,13,8,'2023-12-01 20:19:52','2023-12-01 20:19:52'),
-	(9,13,9,'2023-12-01 20:20:08','2023-12-01 20:20:08'),
-	(10,13,10,'2023-12-08 18:19:24','2023-12-08 18:19:24');
+	(5,13,5,1,0,0'2023-12-01 19:50:25','2023-12-01 19:50:25'),
+	(6,13,6,1,0,0,'2023-12-01 20:16:08','2023-12-01 20:16:08'),
+	(7,13,7,1,0,0,'2023-12-01 20:18:51','2023-12-01 20:18:51'),
+	(8,13,8,1,0,0,'2023-12-01 20:19:52','2023-12-01 20:19:52'),
+	(9,13,9,1,0,0,'2023-12-01 20:20:08','2023-12-01 20:20:08'),
+	(10,13,10,1,0,0,'2023-12-08 18:19:24','2023-12-08 18:19:24');
 
 /*!40000 ALTER TABLE `contrato_ejercicio` ENABLE KEYS */;
 UNLOCK TABLES;
