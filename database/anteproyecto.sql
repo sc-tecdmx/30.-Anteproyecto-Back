@@ -254,9 +254,9 @@ CREATE TABLE `contrato_ejercicio` (
 LOCK TABLES `contrato_ejercicio` WRITE;
 /*!40000 ALTER TABLE `contrato_ejercicio` DISABLE KEYS */;
 
-INSERT INTO `contrato_ejercicio` (`id`, `ejercicio_id`, `contrato_id`, `created_at`, `updated_at`)
+INSERT INTO `contrato_ejercicio` (`id`, `ejercicio_id`, `contrato_id`, `escenario`, `cerrado`, `seleccionado`, `created_at`, `updated_at`)
 VALUES
-	(5,13,5,1,0,0'2023-12-01 19:50:25','2023-12-01 19:50:25'),
+	(5,13,5,1,0,0,'2023-12-01 19:50:25','2023-12-01 19:50:25'),
 	(6,13,6,1,0,0,'2023-12-01 20:16:08','2023-12-01 20:16:08'),
 	(7,13,7,1,0,0,'2023-12-01 20:18:51','2023-12-01 20:18:51'),
 	(8,13,8,1,0,0,'2023-12-01 20:19:52','2023-12-01 20:19:52'),
