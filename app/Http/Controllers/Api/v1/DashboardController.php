@@ -163,7 +163,11 @@ class DashboardController extends Controller
                 ->where('capitulos.capitulo', '=', $chapter->capitulo)
                 ->sum('contrato_ejercicio.importe');
 
-            $totalSumForChapters[$chapter->capitulo] = $total;
+            $totalSumForChapters[] = [
+                'capitulo' => $chapter->capitulo,
+                'descripcion' => $chapter->descripcion,
+                'costo_total' => $total,
+            ];
         }
 
         return response()->json($totalSumForChapters, Response::HTTP_OK);
