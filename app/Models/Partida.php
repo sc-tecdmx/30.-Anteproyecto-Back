@@ -27,6 +27,6 @@ class Partida extends Model
 
     public function contratos()
     {
-        return $this->belongsToMany(Partida::class);
+        return $this->belongsToMany(Contrato::class);
     }
 }

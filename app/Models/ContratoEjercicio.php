@@ -31,11 +31,6 @@ class ContratoEjercicio extends Model
         return $this->belongsto(Ejercicio::class);
     }
 
-    public function versiones ()
-    {
-        return $this->hasMany(Version::class);
-    }
-
     public function partidas()
     {
         return $this->belongsTo(Partida::class);

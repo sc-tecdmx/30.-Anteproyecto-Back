@@ -22,8 +22,13 @@ class DashboardController extends Controller
 
         if(!$exercise) return response(["message" => "No existe el ejercicio"], Response::HTTP_NO_CONTENT);
 
+        $scenario = $request->header('escenario');
+
+        if(!$scenario) return response(["message" => "No existe el ejercicio"], Response::HTTP_UNPROCESSABLE_ENTITY);
+
         $budget = Contrato::join('contrato_ejercicio', 'contratos.id', '=', 'contrato_ejercicio.contrato_id')
             ->where('contrato_ejercicio.ejercicio_id', $exercise)
+            ->where('contrato_ejercicio.escenario', $scenario)
             ->sum('contrato_ejercicio.importe');
 
         $projects = Proyecto::count();

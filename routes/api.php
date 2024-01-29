@@ -181,6 +181,7 @@ Route::group(['prefix' => 'v1/', 'namespace' => 'Api'], function () {
 
     Route::prefix('configuracion')->group(function () {
         Route::get('/escenario', [ConfiguracionController::class, 'scenario']);
+        Route::get('/ejercicio', [ConfiguracionController::class, 'newExcercise']);
         Route::post('/activar', [ConfiguracionController::class, 'activeExercise']);
     });
 

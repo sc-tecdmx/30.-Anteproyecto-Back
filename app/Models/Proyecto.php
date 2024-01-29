@@ -38,8 +38,4 @@ class Proyecto extends Model
     public function responsablesOperativos() {
         return $this->belongsToMany(ResponsableOperativo::class);
     }
-
-    public function contratos() {
-        return $this->belongsToMany(Contrato::class);
-    }
 }
