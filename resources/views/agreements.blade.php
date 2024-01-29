@@ -36,7 +36,7 @@
     <table>
         <thead>
             <tr>
-                <th colspan="7" style="font-weight: bold; font-size: 12px; text-align: center;">
+                <th colspan="9" style="font-weight: bold; font-size: 12px; text-align: center;">
                     <div style="width: 20%;">
                         <img src="{{ public_path('images/TECDMX-Imagen-_400px.png') }}" width="100%" alt="" style="margin: auto;">
                     </div>

@@ -63,6 +63,10 @@ class AnteproyectoController extends Controller
 
         if(!$exercise) return response(["message" => "No existe el ejercicio"], Response::HTTP_UNPROCESSABLE_ENTITY);
 
+        $scenario = $request->header('escenario');
+
+        if(!$scenario) return response(["message" => "No existe el ejercicio"], Response::HTTP_UNPROCESSABLE_ENTITY);
+
         $responsablesOperativos = json_decode($request->header('Responsables'), true);
 
         if (count($responsablesOperativos) == 0) {
@@ -78,10 +82,11 @@ class AnteproyectoController extends Controller
                     'contratos.parcialidad',
                     'contratos.descripcion',
                     'conceptos.numero as concepto',
-                    'contratos.importe',
+                    'contrato_ejercicio.importe',
                     'partidas.numero as partida',
                 )
                 ->where('contrato_ejercicio.ejercicio_id', $exercise)
+                ->where('contrato_ejercicio.escenario', $scenario)
                 ->get();
         } else {
             $result = Contrato::join('contrato_ejercicio', 'contratos.id', '=', 'contrato_ejercicio.contrato_id')
@@ -91,10 +96,11 @@ class AnteproyectoController extends Controller
                 ->select(
                     'contrato_ejercicio.id',
                     'contratos.clave',
-                    'versiones.importe',
+                    'contrato_ejercicio.importe',
                     'partidas.numero as partida'
                 )
                 ->where('contrato_ejercicio.ejercicio_id', $exercise)
+                ->where('contrato_ejercicio.escenario', $scenario)
                 ->whereIn(DB::raw('SUBSTRING(contratos.clave, 3, 2)'), $responsablesOperativos)
                 ->get();
         }

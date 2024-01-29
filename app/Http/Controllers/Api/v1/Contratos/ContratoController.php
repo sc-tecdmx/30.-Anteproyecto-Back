@@ -542,6 +542,10 @@ class ContratoController extends Controller
 
         if(!$exercise) return response(["message" => "No existe el ejercicio"], Response::HTTP_UNPROCESSABLE_ENTITY);
 
+        $scenario = $request->header('escenario');
+
+        if(!$scenario) return response(["message" => "No existe el ejercicio"], Response::HTTP_UNPROCESSABLE_ENTITY);
+
         $responsablesOperativos = json_decode($request->header('Responsables'), true);
 
         if (count($responsablesOperativos) == 0) {
@@ -556,7 +560,7 @@ class ContratoController extends Controller
                     'contratos.id',
                     'contratos.clave',
                     'contratos.descripcion',
-                    'contratos.importe',
+                    'contrato_ejercicio.importe',
                     'contratos.parcialidad',
                     'contratos.tipo',
                     'partidas.numero as partida',
@@ -565,10 +569,10 @@ class ContratoController extends Controller
                     'unidades_responsables_gastos.numero as urg'
                 )
                 ->where('contrato_ejercicio.ejercicio_id', $exercise)
+                ->where('contrato_ejercicio.escenario', $scenario)
                 ->get();
         } else {
             $result = Contrato::join('contrato_ejercicio', 'contratos.id', '=', 'contrato_ejercicio.contrato_id')
-                ->join('versiones', 'versiones.contrato_ejercicio_id', '=', 'contrato_ejercicio.id')
                 ->join('contrato_partida', 'contrato_partida.contrato_ejercicio_id', '=', 'contrato_ejercicio.id')
                 ->join('partidas', 'partidas.id', '=', 'contrato_partida.partida_id')
                 ->join('conceptos', 'conceptos.id', '=', 'partidas.concepto_id')
@@ -578,14 +582,14 @@ class ContratoController extends Controller
                     'contratos.id',
                     'contratos.clave',
                     'contratos.descripcion',
-                    'versiones.importe',
+                    'contrato_ejercicio.importe',
                     'partidas.numero as partida',
                     'conceptos.numero as concepto',
                     'capitulos.capitulo',
                     'unidades_responsables_gastos.numero as urg'
                 )
                 ->where('contrato_ejercicio.ejercicio_id', $exercise)
-                ->where('versiones.seleccionado', 1)
+                ->where('contrato_ejercicio.escenario', $scenario)
                 ->whereIn(DB::raw('SUBSTRING(contratos.clave, 3, 2)'), $responsablesOperativos)
                 ->get();
         }
