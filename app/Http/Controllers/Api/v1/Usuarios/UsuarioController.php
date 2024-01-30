@@ -84,6 +84,50 @@ class UsuarioController extends Controller
         return response()->json($user, Response::HTTP_CREATED);
     }
 
+    public function update($id, Request $request){
+        // validación de datos
+        $request->validate([
+            'nombre' => 'required',
+            'apellido_paterno' => 'required',
+            'genero' => 'required',
+            'usuario' => 'required',
+            // 'password' => 'required',
+            'email' => 'required|email',
+            'rol_id' => 'required|exists:roles,id',
+            'area_id' => 'required|exists:areas,id'
+        ]);
+
+        $dbUser = Usuario::find($id);
+
+        if (!$dbUser) {
+            return response(["message" => "Usuario no encontrado"], Response::HTTP_UNPROCESSABLE_ENTITY);
+        }
+
+        $dbUser->nombre = $request->nombre;
+        $dbUser->apellido_paterno = $request->apellido_paterno;
+        $dbUser->apellido_materno = $request->apellido_materno;
+        $dbUser->genero = $request->genero;
+        $dbUser->usuario = $request->usuario;
+
+        if ($request->password != '') {
+            $dbUser->password = Hash::make($request->password);
+        }
+
+        $dbUser->foto = $request->foto ?? '';
+        $dbUser->email = $request->email;
+        $dbUser->save();
+
+        $dbUserRol = RolUsuario::where('usuario_id', $id)->first();
+        $dbUserRol->rol_id = $request->rol_id;
+        $dbUserRol->save();
+
+        $dbUserArea = AreaUsuario::where('usuario_id', $id)->first();
+        $dbUserArea->area_id = $request->area_id;
+        $dbUserArea->save();
+
+        return response()->json($dbUser, Response::HTTP_OK);
+    }
+
     public function assign($id, Request $request)
     {
         $request->validate([

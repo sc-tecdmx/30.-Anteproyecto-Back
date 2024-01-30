@@ -166,6 +166,7 @@ Route::group(['prefix' => 'v1/', 'namespace' => 'Api'], function () {
         Route::get('/{id}', [UsuarioController::class, 'show']);
         Route::post('/', [UsuarioController::class, 'store']);
         Route::post('/{id}', [UsuarioController::class, 'assign']);
+        Route::put('/{id}', [UsuarioController::class, 'update']);
     });
 
     Route::prefix('roles')->group(function () {
