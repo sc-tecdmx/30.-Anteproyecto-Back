@@ -162,7 +162,10 @@ class ContratoController extends Controller
 
             $measurement = UnidadMedidaAnteproyecto::where('id', $detail->unidad_medida_id)->first();
 
-            if($measurement) $response['unidad_medida'] = $measurement->descripcion;
+            if($measurement) {
+                $response['unidad_medida'] = $measurement->descripcion;
+                $response['unidad_medida_id'] = $detail->unidad_medida_id;
+            }
         }
 
         return response()->json($response, Response::HTTP_OK);
@@ -284,7 +287,6 @@ class ContratoController extends Controller
 
         $agreement->clave = $request->clave;
         $agreement->descripcion = $request->descripcion;
-        $agreement->importe = $request->importe;
         $agreement->parcialidad = $request->parcialidad;
         $agreement->tipo = $request->tipo;
         $agreement->save();
@@ -293,7 +295,6 @@ class ContratoController extends Controller
         $agreementExercise->save();
 
         $split = ContratoPartida::where('contrato_ejercicio_id', $agreementExercise->id)->first();
-        $split->contrato_ejercicio_id = $agreementExercise->id;
         $split->partida_id = $request->partida_id;
         $split->save();
 
@@ -307,15 +308,28 @@ class ContratoController extends Controller
 
         if(!$exercise) return response(["message" => "No existe el ejercicio"], Response::HTTP_UNPROCESSABLE_ENTITY);
 
+        $scenario = $request->header('escenario');
+
+        if(!$scenario) return response(["message" => "No existe el escenario"], Response::HTTP_UNPROCESSABLE_ENTITY);
+
         $request->validate([
             'cantidad' => 'required',
             'costo_unitario' => 'required',
-            'unidad_medida_id' => 'required'
+            'unidad_medida_id' => 'required|exists:unidades_medida_anteproyecto,id'
         ]);
 
-        $agreementExercise = ContratoEjercicio::where('contrato_id', $id)->where('ejercicio_id', $exercise)->first();
+        $agreementExercise = ContratoEjercicio::where('contrato_id', $id)->where('ejercicio_id', $exercise)->where('escenario', $scenario)->first();
 
         if(!$agreementExercise) return response(["message" => "No hay contrato en este ejercicio"], Response::HTTP_UNPROCESSABLE_ENTITY);
+
+        $dbDetail = DetalleContrato::where('contrato_ejercicio_id', $agreementExercise->id)->first();
+
+        if ($dbDetail) {
+            $dbDetail->fill($request->all());
+            $dbDetail->save();
+
+            return response()->json($dbDetail, RESPONSE::HTTP_OK);
+        }
 
         $detail = new DetalleContrato();
         $detail->contrato_ejercicio_id = $agreementExercise->id;
@@ -333,20 +347,24 @@ class ContratoController extends Controller
 
         if(!$exercise) return response(["message" => "No existe el ejercicio"], Response::HTTP_UNPROCESSABLE_ENTITY);
 
-        $agreementExercise = ContratoEjercicio::where('contrato_id', $id)->where('ejercicio_id', $exercise)->first();
+        $scenario = $request->header('escenario');
+
+        if(!$scenario) return response(["message" => "No existe el escenario"], Response::HTTP_UNPROCESSABLE_ENTITY);
+
+        $agreementExercise = ContratoEjercicio::where('contrato_id', $id)->where('ejercicio_id', $exercise)->where('escenario', $scenario)->first();
 
         if(!$agreementExercise) return response(["message" => "No hay contrato en este ejercicio"], Response::HTTP_UNPROCESSABLE_ENTITY);
 
         $request->validate([
             'cantidad' => 'required',
             'costo_unitario' => 'required',
-            'unidad_medida_id' => 'required|exists:unidades_medida,id'
+            'unidad_medida_id' => 'required|exists:unidades_medida_anteproyecto,id'
         ]);
 
         $dbDetail = DetalleContrato::where('contrato_ejercicio_id', $agreementExercise->id)->first();
 
         if (!$dbDetail) {
-            return response(["message" => "Concepto no encontrado"], Response::HTTP_UNPROCESSABLE_ENTITY);
+            return response(["message" => "Detalle no encontrado"], Response::HTTP_UNPROCESSABLE_ENTITY);
         }
 
         $dbDetail->fill($request->all());
