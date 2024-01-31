@@ -193,6 +193,14 @@ class DashboardController extends Controller
             ->where('capitulos.capitulo', '=', $id)
             ->get();
         
-        return response()->json($agreements, Response::HTTP_OK);
+        $total = $agreements->sum('importe');
+        
+        $data = [
+            'capitulo' => $id,
+            'contratos' => $agreements,
+            'total' => $total
+        ];
+
+        return response()->json($data, Response::HTTP_OK);
     }
 }
