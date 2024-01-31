@@ -50,6 +50,7 @@ Route::group(['prefix' => 'v1/', 'namespace' => 'Api'], function () {
         Route::get('/meses', [DashboardController::class, 'monthCost']);
         Route::get('/programas', [DashboardController::class, 'programCost']);
         Route::get('/capitulos', [DashboardController::class, 'chapterCost']);
+        Route::get('/capitulos/{id}', [DashboardController::class, 'getChaptersCost']);
     });
 
     Route::prefix('ejercicios')->group(function () {

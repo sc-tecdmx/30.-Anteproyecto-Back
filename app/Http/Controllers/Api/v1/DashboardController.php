@@ -172,4 +172,27 @@ class DashboardController extends Controller
 
         return response()->json($totalSumForChapters, Response::HTTP_OK);
     }
+
+    public function getChaptersCost($id, Request $request)
+    {
+        $exercise = $request->header('ejercicio');
+
+        if(!$exercise) return response(["message" => "No existe el ejercicio"], Response::HTTP_NO_CONTENT);
+
+        $scenario = $request->header('escenario');
+
+        if(!$scenario) return response(["message" => "No existe el escenario"], Response::HTTP_UNPROCESSABLE_ENTITY);
+
+        $agreements = Contrato::join('contrato_ejercicio', 'contratos.id', '=', 'contrato_ejercicio.contrato_id')
+            ->join('contrato_partida', 'contrato_partida.contrato_ejercicio_id', '=', 'contrato_ejercicio.id')
+            ->join('partidas', 'partidas.id', '=', 'contrato_partida.partida_id')
+            ->join('conceptos', 'conceptos.id', '=', 'partidas.concepto_id')
+            ->join('capitulos', 'capitulos.id', '=', 'conceptos.capitulo_id')
+            ->where('contrato_ejercicio.ejercicio_id', '=', $exercise)
+            ->where('contrato_ejercicio.escenario', '=', $scenario)
+            ->where('capitulos.capitulo', '=', $id)
+            ->get();
+        
+        return response()->json($agreements, Response::HTTP_OK);
+    }
 }
