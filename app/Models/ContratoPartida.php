@@ -11,4 +11,14 @@ class ContratoPartida extends Model
 
     /** @var string */
     protected $table = 'contrato_partida';
+
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var array<int, string>
+     */
+    protected $fillable = [
+        'contrato_ejercicio_id',
+        'partida_id'
+    ];
 }

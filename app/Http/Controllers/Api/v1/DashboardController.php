@@ -85,7 +85,7 @@ class DashboardController extends Controller
             $total = Contrato::join('contrato_ejercicio', 'contratos.id', '=', 'contrato_ejercicio.contrato_id')
                 ->where('contrato_ejercicio.ejercicio_id', $exercise)
                 ->where(DB::raw('SUBSTRING(contratos.clave, 1, 2)'), $urg->numero)
-                ->sum('contratos.importe');
+                ->sum('contrato_ejercicio.importe');
 
             $sumaTotalPorUnidad[$urg->nombre] = $total;
         }
@@ -130,7 +130,7 @@ class DashboardController extends Controller
             $total = Contrato::join('contrato_ejercicio', 'contratos.id', '=', 'contrato_ejercicio.contrato_id')
                 ->where('contrato_ejercicio.ejercicio_id', $exercise)
                 ->where(DB::raw('SUBSTRING(contratos.clave, 5, 2)'), $program->numero)
-                ->sum('contratos.importe');
+                ->sum('contrato_ejercicio.importe');
 
             $sumaTotalPorPrograma[$program->nombre] = $total;
         }
