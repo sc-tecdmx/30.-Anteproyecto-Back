@@ -88,18 +88,18 @@ class AgreementImport implements ToModel, WithHeadingRow, WithValidation
             'tipo' => 'required',
             'importe' => 'required',
             'partida' => 'required',
-            'enero' => 'required',
-            'febrero' => 'required',
-            'marzo' => 'required',
-            'abril' => 'required',
-            'mayo' => 'required',
-            'junio' => 'required',
-            'julio' => 'required',
-            'agosto' => 'required',
-            'septiembre' => 'required',
-            'octubre' => 'required',
-            'noviembre' => 'required',
-            'diciembre' => 'required'
+            'enero' => '',
+            'febrero' => '',
+            'marzo' => '',
+            'abril' => '',
+            'mayo' => '',
+            'junio' => '',
+            'julio' => '',
+            'agosto' => '',
+            'septiembre' => '',
+            'octubre' => '',
+            'noviembre' => '',
+            'diciembre' => ''
         ];
     }
 }
