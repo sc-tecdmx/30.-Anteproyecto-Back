@@ -10,6 +10,7 @@ use App\Models\Mes;
 use App\Models\Programa;
 use App\Models\Proyecto;
 use App\Models\UnidadResponsableGasto;
+use App\Models\ContratoEjercicio;
 use Symfony\Component\HttpFoundation\Response;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -77,20 +78,49 @@ class DashboardController extends Controller
 
         if(!$exercise) return response(["message" => "No existe el ejercicio"], Response::HTTP_UNPROCESSABLE_ENTITY);
 
+        $scenario = $request->header('escenario');
+
+        if(!$scenario) return response(["message" => "No existe el escenario"], Response::HTTP_UNPROCESSABLE_ENTITY);
+
         $urgs = UnidadResponsableGasto::get();
 
-        $sumaTotalPorUnidad = [];
+        // $sumaTotalPorUnidad = [];
+        $data = [];
 
         foreach ($urgs as $urg) {
             $total = Contrato::join('contrato_ejercicio', 'contratos.id', '=', 'contrato_ejercicio.contrato_id')
                 ->where('contrato_ejercicio.ejercicio_id', $exercise)
+                ->where('contrato_ejercicio.escenario', $scenario)
                 ->where(DB::raw('SUBSTRING(contratos.clave, 1, 2)'), $urg->numero)
                 ->sum('contrato_ejercicio.importe');
+            
+            $agrements = ContratoEjercicio::where('ejercicio_id', $exercise)->where('escenario', $scenario)->where('cerrado', 1)
+                ->join('contratos', 'contrato_ejercicio.contrato_id','=','contratos.id')
+                ->join('unidades_responsables_gastos', 'unidades_responsables_gastos.numero', '=', DB::raw('SUBSTRING(contratos.clave, 1, 2)'))
+                ->where(DB::raw('SUBSTRING(contratos.clave, 1, 2)'), $urg->numero)
+                ->get();
 
-            $sumaTotalPorUnidad[$urg->nombre] = $total;
+            if (!$agrements->isEmpty()) {
+                $data[] = [
+                    'id' => $urg->id,
+                    'numero' => $urg->numero,
+                    'nombre' => $urg->nombre,
+                    'total' => $total,
+                    'cerrado' => 1
+                ];
+            } else {
+                $data[] = [
+                    'id' => $urg->id,
+                    'numero' => $urg->numero,
+                    'nombre' => $urg->nombre,
+                    'total' => $total,
+                    'cerrado' => 0
+                ];
+            }
+                //$sumaTotalPorUnidad[$urg->nombre] = $total;
         }
 
-        return response()->json($sumaTotalPorUnidad, Response::HTTP_OK);
+        return response()->json($data, Response::HTTP_OK);
     }
 
     public function monthCost(Request $request)
@@ -98,6 +128,10 @@ class DashboardController extends Controller
         $exercise = $request->header('ejercicio');
 
         if(!$exercise) return response(["message" => "No existe el ejercicio"], Response::HTTP_NO_CONTENT);
+
+        $scenario = $request->header('escenario');
+
+        if(!$scenario) return response(["message" => "No existe el escenario"], Response::HTTP_UNPROCESSABLE_ENTITY);
 
         $months = Mes::get();
 
@@ -107,6 +141,7 @@ class DashboardController extends Controller
             $total = Contrato::join('contrato_ejercicio', 'contratos.id', '=', 'contrato_ejercicio.contrato_id')
                 ->join('contratos_ejecucion', 'contratos_ejecucion.contrato_ejercicio_id', '=', 'contrato_ejercicio.contrato_id')
                 ->where('contrato_ejercicio.ejercicio_id', $exercise)
+                ->where('contrato_ejercicio.escenario', $scenario)
                 ->where('contratos_ejecucion.mes_id', $month->id)
                 ->sum('contratos_ejecucion.costo');
 
@@ -122,6 +157,10 @@ class DashboardController extends Controller
 
         if(!$exercise) return response(["message" => "No existe el ejercicio"], Response::HTTP_NO_CONTENT);
 
+        $scenario = $request->header('escenario');
+
+        if(!$scenario) return response(["message" => "No existe el escenario"], Response::HTTP_UNPROCESSABLE_ENTITY);
+
         $programs = Programa::get();
 
         $sumaTotalPorPrograma = [];
@@ -129,6 +168,7 @@ class DashboardController extends Controller
         foreach ($programs as $program) {
             $total = Contrato::join('contrato_ejercicio', 'contratos.id', '=', 'contrato_ejercicio.contrato_id')
                 ->where('contrato_ejercicio.ejercicio_id', $exercise)
+                ->where('contrato_ejercicio.escenario', $scenario)
                 ->where(DB::raw('SUBSTRING(contratos.clave, 5, 2)'), $program->numero)
                 ->sum('contrato_ejercicio.importe');
 
@@ -159,7 +199,7 @@ class DashboardController extends Controller
                 ->join('conceptos', 'conceptos.id', '=', 'partidas.concepto_id')
                 ->join('capitulos', 'capitulos.id', '=', 'conceptos.capitulo_id')
                 ->where('contrato_ejercicio.ejercicio_id', '=', $exercise)
-                ->where('contrato_ejercicio.escenario', '=', $scenario)
+                ->where('contrato_ejercicio.escenario', $scenario)
                 ->where('capitulos.capitulo', '=', $chapter->capitulo)
                 ->sum('contrato_ejercicio.importe');
 

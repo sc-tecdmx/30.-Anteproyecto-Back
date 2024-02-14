@@ -8,9 +8,9 @@ use App\Models\ContratoEjercicio;
 use App\Models\ContratoPartida;
 use App\Models\DetalleContrato;
 use App\Models\Ejercicio;
-use App\Models\Version;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Illuminate\Support\Facades\DB;
 
 class ConfiguracionController extends Controller
 {
@@ -119,6 +119,10 @@ class ConfiguracionController extends Controller
 
         if(!$exercise) return response(["message" => "No existe el ejercicio"], Response::HTTP_UNPROCESSABLE_ENTITY);
 
+        $scenario = $request->header('escenario');
+
+        if(!$scenario) return response(["message" => "No existe el escenario"], Response::HTTP_UNPROCESSABLE_ENTITY);
+
         $lastScenario = ContratoEjercicio::where('ejercicio_id', $exercise)->max('escenario');
 
         $newNumberScenario = $lastScenario + 1;
@@ -147,5 +151,154 @@ class ConfiguracionController extends Controller
         }
 
         return response()->json($exercise, Response::HTTP_CREATED);
+    }
+
+    public function scenarioProof(Request $request)
+    {
+        $exercise = $request->header('ejercicio');
+
+        if(!$exercise) return response(["message" => "No existe el ejercicio"], Response::HTTP_UNPROCESSABLE_ENTITY);
+
+        $scenario = $request->header('escenario');
+
+        if(!$scenario) return response(["message" => "No existe el escenario"], Response::HTTP_UNPROCESSABLE_ENTITY);
+
+        $lastScenario = ContratoEjercicio::where('ejercicio_id', $exercise)->max('escenario');
+
+        $newNumberScenario = $lastScenario + 1;
+
+        $firstScenarios = ContratoEjercicio::where('ejercicio_id', $exercise)->where('escenario', 1)->get();
+
+        $contratosEjercicios = [];
+        $ejecucionesContratos = [];
+
+        foreach ($firstScenarios as $firstScenario) {
+            $contratosEjercicios[] = [
+                'id' => $firstScenario->id,
+                'ejercicio_id' => $exercise,
+                'contrato_id' => $firstScenario->contrato_id,
+                'escenario' => $newNumberScenario,
+                'cerrado' => 0,
+                'seleccionado' => 0,
+                'importe' => $firstScenario->importe
+            ];
+
+            $executionFirstScenario = ContratoEjecucion::where('contrato_ejercicio_id', $firstScenario->id)->get();
+
+            foreach ($executionFirstScenario as $execution) {
+                $ejecucionesContratos[] = [
+                    'contrato_ejercicio_id' => $firstScenario->id,
+                    'mes_id' => $execution->mes_id,
+                    'costo' => $execution->costo
+                ];
+            }
+        }
+
+        $data = [
+            'contratos' => $contratosEjercicios,
+            'ejecuciones' => $ejecucionesContratos
+        ];
+
+        return response()->json($data, Response::HTTP_CREATED);
+    }
+
+    private function getAgreements($exercise, $scenario, $managers)
+    {
+        if (count($managers) == 0) {
+            $result = ContratoEjercicio::where('ejercicio_id', $exercise)->where('escenario', $scenario)->get();            
+            return $result;
+        }
+
+        $resultado = DB::table('responsables_operativos')
+                    ->select('responsables_operativos.numero as ronum', 'unidades_responsables_gastos.numero as urnum')
+                    ->join('responsable_operativo_urg', 'responsable_operativo_urg.responsable_operativo_id', '=', 'responsables_operativos.id')
+                    ->join('unidades_responsables_gastos', 'unidades_responsables_gastos.id', '=', 'responsable_operativo_urg.unidad_responsable_gasto_id')
+                    ->whereIn('responsables_operativos.id', $managers)
+                    ->get();
+
+        $rosurg = $resultado->map(function ($re) {
+            return [
+                $re->ronum . $re->urnum
+            ];
+        });
+
+        $result = ContratoEjercicio::where('ejercicio_id', $exercise)->where('escenario', $scenario)
+            ->join('contratos', 'contrato_ejercicio.contrato_id','=','contratos.id')
+            ->join('unidades_responsables_gastos', 'unidades_responsables_gastos.numero', '=', DB::raw('SUBSTRING(contratos.clave, 1, 2)'))
+            ->whereIn(DB::raw('SUBSTRING(contratos.clave, 1, 4)'), $rosurg)
+            ->get();
+        
+        return $result;
+    }
+
+    public function closeAgreements(Request $request)
+    {
+        $exercise = $request->header('ejercicio');
+
+        if(!$exercise) return response(["message" => "No existe el ejercicio"], Response::HTTP_UNPROCESSABLE_ENTITY);
+
+        $scenario = $request->header('escenario');
+
+        if(!$scenario) return response(["message" => "No existe el escenario"], Response::HTTP_UNPROCESSABLE_ENTITY);
+
+        $responsablesOperativos = json_decode($request->header('Responsables'), true);
+
+        $result = $this->getAgreements($exercise, $scenario, $responsablesOperativos);
+
+        return response()->json($result, Response::HTTP_CREATED);
+
+        foreach ($result as $agreement) {
+            $agreementExercise = ContratoEjercicio::where('contrato_id', $agreement->contrato_id)->where('ejercicio_id', $exercise)->where('escenario', $scenario)->first();
+            $agreementExercise->cerrado = 1;
+            $agreementExercise->save();
+        }
+
+        return response()->json(['mensaje' => 'Los contratos fueron cerrados correctamente'], Response::HTTP_CREATED);
+    }
+
+    public function openAgreements(Request $request)
+    {
+        $exercise = $request->header('ejercicio');
+
+        if(!$exercise) return response(["message" => "No existe el ejercicio"], Response::HTTP_UNPROCESSABLE_ENTITY);
+
+        $scenario = $request->header('escenario');
+
+        if(!$scenario) return response(["message" => "No existe el escenario"], Response::HTTP_UNPROCESSABLE_ENTITY);
+
+        $responsablesOperativos = json_decode($request->header('Responsables'), true);
+
+        $result = $this->getAgreements($exercise, $scenario, $responsablesOperativos);
+
+        foreach ($result as $agreement) {
+            $agreementExercise = ContratoEjercicio::where('contrato_id', $agreement->contrato_id)->where('ejercicio_id', $exercise)->where('escenario', $scenario)->first();
+            $agreementExercise->cerrado = 0;
+            $agreementExercise->save();
+        }
+
+        return response()->json(['mensaje' => 'Los contratos fueron abiertos correctamente'], Response::HTTP_CREATED);
+    }
+
+    public function selectAgreement(Request $request)
+    {
+        $exercise = $request->header('ejercicio');
+
+        if(!$exercise) return response(["message" => "No existe el ejercicio"], Response::HTTP_UNPROCESSABLE_ENTITY);
+
+        $scenario = $request->header('escenario');
+
+        if(!$scenario) return response(["message" => "No existe el escenario"], Response::HTTP_UNPROCESSABLE_ENTITY);
+
+        $responsablesOperativos = json_decode($request->header('Responsables'), true);
+
+        $result = $this->getAgreements($exercise, $scenario, $responsablesOperativos);
+
+        foreach ($result as $agreement) {
+            $agreementExercise = ContratoEjercicio::where('contrato_id', $agreement->contrato_id)->where('ejercicio_id', $exercise)->where('escenario', $scenario)->first();
+            $agreementExercise->seleccionado = 1;
+            $agreementExercise->save();
+        }
+
+        return response()->json(['mensaje' => 'Los contratos fueron abiertos correctamente'], Response::HTTP_CREATED);
     }
 }

@@ -102,8 +102,10 @@ Route::group(['prefix' => 'v1/', 'namespace' => 'Api'], function () {
 
     Route::prefix('unidades-responsables-gastos')->group(function () {
         Route::get('/', [UnidadResponsableGastoController::class, 'index']);
+        Route::get('/cerrada', [UnidadResponsableGastoController::class, 'closed']);
         Route::get('/{id}', [UnidadResponsableGastoController::class, 'show']);
         Route::post('/', [UnidadResponsableGastoController::class, 'store']);
+        Route::post('/{id}/estatus', [UnidadResponsableGastoController::class, 'updateState']);
     });
 
     Route::prefix('programas')->group(function () {
@@ -151,6 +153,7 @@ Route::group(['prefix' => 'v1/', 'namespace' => 'Api'], function () {
         Route::post('/importar', [ImportController::class, 'importExcel']);
         Route::post('/{id}/detalle', [ContratoController::class, 'detail']);
         Route::post('/{id}/version', [ContratoController::class, 'version']);
+        Route::put('/{id}', [ContratoController::class, 'update']);
         Route::put('/{id}/ejecucion', [ContratoController::class, 'execute']);
         Route::put('/{id}/detalle', [ContratoController::class, 'updateDetail']);
         Route::put('/versiones/{id}/', [ContratoController::class, 'updateVersion']);
@@ -184,6 +187,7 @@ Route::group(['prefix' => 'v1/', 'namespace' => 'Api'], function () {
     Route::prefix('configuracion')->group(function () {
         Route::get('/escenario', [ConfiguracionController::class, 'scenario']);
         Route::get('/ejercicio', [ConfiguracionController::class, 'newExcercise']);
+        Route::get('/cerrar', [ConfiguracionController::class, 'closeAgreements']);
         Route::post('/activar', [ConfiguracionController::class, 'activeExercise']);
     });
 

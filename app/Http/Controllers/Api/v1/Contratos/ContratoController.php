@@ -51,12 +51,12 @@ class ContratoController extends Controller
                     'partidas.numero as partida',
                     'conceptos.numero as concepto',
                     'capitulos.capitulo',
-                    'unidades_responsables_gastos.numero as urg'
+                    'unidades_responsables_gastos.numero as urg',
+                    'contrato_ejercicio.cerrado'
                 )
                 ->where('contrato_ejercicio.ejercicio_id', $exercise)
                 ->where('contrato_ejercicio.escenario', $scenario)
-                //->where('versiones.seleccionado', 1)
-                ->groupBy('contratos.clave', 'contratos.id', 'contratos.descripcion', 'partidas.numero', 'conceptos.numero', 'capitulos.capitulo', 'unidades_responsables_gastos.numero')
+                ->groupBy('contratos.clave', 'contratos.id', 'contratos.descripcion', 'partidas.numero', 'conceptos.numero', 'capitulos.capitulo', 'unidades_responsables_gastos.numero', 'contrato_ejercicio.cerrado')
                 ->get();
         } else {
             $resultado = DB::table('responsables_operativos')
@@ -85,13 +85,13 @@ class ContratoController extends Controller
                     'partidas.numero as partida',
                     'conceptos.numero as concepto',
                     'capitulos.capitulo',
-                    'unidades_responsables_gastos.numero as urg'
+                    'unidades_responsables_gastos.numero as urg',
+                    'contrato_ejercicio.cerrado'
                 )
                 ->where('contrato_ejercicio.ejercicio_id', $exercise)
                 ->where('contrato_ejercicio.escenario', $scenario)
-                //->where('versiones.seleccionado', 1)
-                ->whereIn(DB::raw('SUBSTRING(contratos.clave, 3, 2)'), $rosurg)
-                ->groupBy('contratos.clave', 'contratos.id', 'contratos.descripcion', 'partidas.numero', 'conceptos.numero', 'capitulos.capitulo', 'unidades_responsables_gastos.numero')
+                ->whereIn(DB::raw('SUBSTRING(contratos.clave, 1, 4)'), $rosurg)
+                ->groupBy('contratos.clave', 'contratos.id', 'contratos.descripcion', 'partidas.numero', 'conceptos.numero', 'capitulos.capitulo', 'unidades_responsables_gastos.numero', 'contrato_ejercicio.cerrado')
                 ->get();
         }
         return response()->json($result, Response::HTTP_OK);
