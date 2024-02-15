@@ -43,6 +43,7 @@ use Illuminate\Support\Facades\Route;
 Route::group(['prefix' => 'v1/', 'namespace' => 'Api'], function () {
     Route::post('/registro', [AutenticacionController::class, 'register']);
     Route::post('/login', [AutenticacionController::class, 'login']);
+    Route::post('/logout', [AutenticacionController::class, 'logout']);
 
     Route::prefix('dashboard')->group(function () {
         Route::get('/', [DashboardController::class, 'index']);
@@ -192,9 +193,6 @@ Route::group(['prefix' => 'v1/', 'namespace' => 'Api'], function () {
     });
 
     Route::group(['middleware' => ['auth:sanctum']], function () {
-        Route::post('/logout', [AutenticacionController::class, 'logout']);
-
-        
     });
 });
 
