@@ -966,7 +966,7 @@ CREATE TABLE `usuarios` (
 
 LOCK TABLES `usuarios` WRITE;
 /*!40000 ALTER TABLE `usuarios` DISABLE KEYS */;
-INSERT INTO `usuarios` VALUES (1,'Rene','Navarrete','Tenco','Hombre','rene.navarrete','$2y$10$0lbt.LxzVxTF54c0Oww4COo8x/G.ofFLtdqRl3aC0hDNAxTvfyc9e','luis.romero@tecdmx.com','','2023-11-28 22:25:02','2023-11-28 22:25:02');
+INSERT INTO `usuarios` VALUES (1,'Admin','Admin','Admin','Hombre','admin','$2y$10$0lbt.LxzVxTF54c0Oww4COo8x/G.ofFLtdqRl3aC0hDNAxTvfyc9e','admin@tecdmx.com','','2023-11-28 22:25:02','2023-11-28 22:25:02');
 /*!40000 ALTER TABLE `usuarios` ENABLE KEYS */;
 UNLOCK TABLES;
 
