@@ -27,43 +27,80 @@ class DashboardController extends Controller
 
         if(!$scenario) return response(["message" => "No existe el ejercicio"], Response::HTTP_UNPROCESSABLE_ENTITY);
 
-        $budget = Contrato::join('contrato_ejercicio', 'contratos.id', '=', 'contrato_ejercicio.contrato_id')
-            ->where('contrato_ejercicio.ejercicio_id', $exercise)
-            ->where('contrato_ejercicio.escenario', $scenario)
-            ->sum('contrato_ejercicio.importe');
+        $responsablesOperativos = json_decode($request->header('Responsables'), true);
 
-        $projects = Proyecto::count();
+        if (count($responsablesOperativos) == 0) {
+            $budget = Contrato::join('contrato_ejercicio', 'contratos.id', '=', 'contrato_ejercicio.contrato_id')
+                ->where('contrato_ejercicio.ejercicio_id', $exercise)
+                ->where('contrato_ejercicio.escenario', $scenario)
+                ->sum('contrato_ejercicio.importe');
 
-        $urgs = UnidadResponsableGasto::count();
+            $projects = Proyecto::count();
 
-        $concepts = Concepto::count();
+            $urgs = UnidadResponsableGasto::count();
 
-        $result = [
-            [
-                "title" => "Costo Total",
-                "value" => $budget,
-                "iconClass" => "fa-solid fa-dollar-sign",
-                "iconBackground" => "bg-primary",
-            ],
-            [
-                "title" => "Proyectos",
-                "value" => $projects,
-                "iconClass" => "fa-solid fa-list-check",
-                "iconBackground" => "bg-info",
-            ],
-            [
-                "title" => "URG",
-                "value" => $urgs,
-                "iconClass" => "fa-solid fa-book",
-                "iconBackground" => "bg-dark",
-            ],
-            [
-                "title" => "Conceptos",
-                "value" => $concepts,
-                "iconClass" => "fa-solid fa-chart-simple",
-                "iconBackground" => "bg-warning",
-            ]
-        ];
+            $concepts = Concepto::count();
+
+            $result = [
+                [
+                    "title" => "Costo Total",
+                    "value" => $budget,
+                    "iconClass" => "fa-solid fa-dollar-sign",
+                    "iconBackground" => "bg-primary",
+                ],
+                [
+                    "title" => "Proyectos",
+                    "value" => $projects,
+                    "iconClass" => "fa-solid fa-list-check",
+                    "iconBackground" => "bg-info",
+                ],
+                [
+                    "title" => "URG",
+                    "value" => $urgs,
+                    "iconClass" => "fa-solid fa-book",
+                    "iconBackground" => "bg-dark",
+                ],
+                [
+                    "title" => "Conceptos",
+                    "value" => $concepts,
+                    "iconClass" => "fa-solid fa-chart-simple",
+                    "iconBackground" => "bg-warning",
+                ]
+            ];
+        } else {
+            $resultado = DB::table('responsables_operativos')
+                    ->select('responsables_operativos.numero as ronum', 'unidades_responsables_gastos.numero as urnum')
+                    ->join('responsable_operativo_urg', 'responsable_operativo_urg.responsable_operativo_id', '=', 'responsables_operativos.id')
+                    ->join('unidades_responsables_gastos', 'unidades_responsables_gastos.id', '=', 'responsable_operativo_urg.unidad_responsable_gasto_id')
+                    ->whereIn('responsables_operativos.id', $responsablesOperativos)
+                    ->get();
+
+            $rosurg = $resultado->map(function ($re) {
+                return [
+                    $re->urnum . $re->ronum
+                ];
+            });
+
+            $budget = Contrato::join('contrato_ejercicio', 'contratos.id', '=', 'contrato_ejercicio.contrato_id')
+                ->join('contrato_partida', 'contrato_partida.contrato_ejercicio_id', '=', 'contrato_ejercicio.id')
+                ->join('partidas', 'partidas.id', '=', 'contrato_partida.partida_id')
+                ->join('conceptos', 'conceptos.id', '=', 'partidas.concepto_id')
+                ->join('capitulos', 'capitulos.id', '=', 'conceptos.capitulo_id')
+                ->join('unidades_responsables_gastos', 'unidades_responsables_gastos.numero', '=', DB::raw('SUBSTRING(contratos.clave, 1, 2)'))
+                ->where('contrato_ejercicio.ejercicio_id', $exercise)
+                ->where('contrato_ejercicio.escenario', $scenario)
+                ->whereIn(DB::raw('SUBSTRING(contratos.clave, 1, 4)'), $rosurg)
+                ->sum('contrato_ejercicio.importe');
+            
+            $result = [
+                [
+                    "title" => "Costo Total",
+                    "value" => $budget,
+                    "iconClass" => "fa-solid fa-dollar-sign",
+                    "iconBackground" => "bg-primary",
+                ]
+            ];
+        }
 
         return response()->json($result, Response::HTTP_OK);
     }

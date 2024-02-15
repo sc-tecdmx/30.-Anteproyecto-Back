@@ -68,7 +68,7 @@ class ContratoController extends Controller
 
             $rosurg = $resultado->map(function ($re) {
                 return [
-                    $re->ronum . $re->urnum
+                    $re->urnum . $re->ronum
                 ];
             });
 
