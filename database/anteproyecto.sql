@@ -36,15 +36,13 @@ CREATE TABLE `area_usuario` (
 ) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
-
-INSERT INTO `area_usuario` VALUES (1,1,25,'2023-11-28 22:25:02','2023-11-28 22:25:02');
 --
 -- Dumping data for table `area_usuario`
 --
 
 LOCK TABLES `area_usuario` WRITE;
 /*!40000 ALTER TABLE `area_usuario` DISABLE KEYS */;
-INSERT INTO `area_usuario` VALUES (1,1,25,NULL,NULL);
+INSERT INTO `area_usuario` VALUES (1,1,25,'2023-11-28 22:25:02','2023-11-28 22:25:02');
 /*!40000 ALTER TABLE `area_usuario` ENABLE KEYS */;
 UNLOCK TABLES;
 
