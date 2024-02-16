@@ -14,6 +14,7 @@ use App\Exports\Capitulos;
 use App\Exports\CapitulosConceptos;
 use App\Exports\Contratos;
 use App\Exports\ContratosPartidas;
+use App\Exports\ContratosProyectos;
 use App\Exports\ContratosVersiones;
 use App\Models\Ejercicio;
 use App\Models\Mes;
@@ -219,47 +220,6 @@ class ReporteContratoController extends Controller
         return $exporter->download("capyconcepto.xlsx");
     }
 
-    public function agreementSplit1(Request $request)
-    {
-        $exercise = $request->header('ejercicio');
-
-        if(!$exercise) return response(["message" => "No existe el ejercicio"], Response::HTTP_UNPROCESSABLE_ENTITY);
-
-        $scenario = $request->header('escenario');
-
-        if(!$scenario) return response(["message" => "No existe el escenario"], Response::HTTP_UNPROCESSABLE_ENTITY);
-
-        $year = Ejercicio::find($exercise);
-
-        $splits = Partida::get();
-
-        $data = [];
-        $budget = 0;
-
-        foreach ($splits as $split) {
-            $resultado = DB::table('contratos')
-                ->join('contrato_ejercicio', 'contratos.id', '=', 'contrato_ejercicio.contrato_id')
-                ->join('contrato_partida', 'contrato_ejercicio.id', '=', 'contrato_partida.contrato_ejercicio_id')
-                ->join('partidas', 'contrato_partida.partida_id', '=', 'partidas.id')
-                ->where('partidas.id', $split->id)
-                ->where('contrato_ejercicio.ejercicio_id', $exercise)
-                ->where('contrato_ejercicio.escenario', $scenario)
-                ->sum('contrato_ejercicio.importe');
-            
-            $budget += $resultado;
-
-            $data[] = [
-                'numero' => $split->numero,
-                'partida' => $split->descripcion,
-                'total' => $resultado
-            ];
-        }
-
-        $exporter = new ContratosPartidas($data, $budget);
-
-        return $exporter->download("partidas.xlsx");
-    }
-
     public function agreementSplit(Request $request)
     {
         $exercise = $request->header('ejercicio');
@@ -329,5 +289,55 @@ class ReporteContratoController extends Controller
         $exporter = new ContratosPartidas($response);
 
         return $exporter->download("partidas.xlsx");
+    }
+
+    public function agreementProject(Request $request)
+    {
+        $exercise = $request->header('ejercicio');
+
+        if(!$exercise) return response(["message" => "No existe el ejercicio"], Response::HTTP_UNPROCESSABLE_ENTITY);
+
+        $scenario = $request->header('escenario');
+
+        if(!$scenario) return response(["message" => "No existe el escenario"], Response::HTTP_UNPROCESSABLE_ENTITY);
+
+        $projects = Proyecto::get();
+
+        $projects = Proyecto::select('proyectos.numero as pynum', 'subprogramas.numero as sbnum', 'programas.numero as pgnum', 'responsables_operativos.numero as ronum', 'unidades_responsables_gastos.numero as urnum', 'proyectos.descripcion')
+            ->join('proyecto_responsable_operativo', 'proyecto_responsable_operativo.proyecto_id', '=', 'proyectos.id')
+            ->join('responsables_operativos', 'proyecto_responsable_operativo.responsable_operativo_id', '=', 'responsables_operativos.id')
+            ->join('responsable_operativo_urg', 'responsable_operativo_urg.responsable_operativo_id', '=', 'responsables_operativos.id')
+            ->join('unidades_responsables_gastos', 'unidades_responsables_gastos.id', '=', 'responsable_operativo_urg.unidad_responsable_gasto_id')
+            ->join('proyecto_subprograma', 'proyecto_subprograma.proyecto_id', '=', 'proyectos.id')
+            ->join('subprogramas', 'proyecto_subprograma.subprograma_id', '=', 'subprogramas.id')
+            ->join('programa_subprograma', 'programa_subprograma.subprograma_id', '=', 'subprogramas.id')
+            ->join('programas', 'programas.id', '=', 'programa_subprograma.programa_id')
+            ->get();
+
+        $response = [];
+        $total = 0;
+
+        foreach ($projects as $project) {
+            $clave = $project->urnum . $project->ronum . $project->pgnum . $project->sbnum . $project->pynum;
+            $result = Contrato::join('contrato_ejercicio', 'contratos.id', '=', 'contrato_ejercicio.contrato_id')
+                ->where('contrato_ejercicio.ejercicio_id', $exercise)
+                ->where('contrato_ejercicio.escenario', $scenario)
+                ->where('contratos.clave', $clave)
+                ->sum('contrato_ejercicio.importe');
+
+            $total += $result;
+            
+            $response[] = [
+                'clave' => $clave,
+                'descripcion' => $project->descripcion,
+                'total' => $result
+            ];
+        }
+
+        $budget = $total;
+
+        $exporter = new ContratosProyectos($response, $budget);
+
+        return $exporter->download("proyectos.xlsx");
     }
 }
