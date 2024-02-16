@@ -80,7 +80,7 @@
                 <td></td>
                 <td>{{ $concepto['numero'] }}</td>
                 <td>{{ $concepto['descripcion'] }}</td>
-                <td>{{ $concepto['subtotal'] }}</td>
+                <td>{{ number_format($concepto['subtotal'],2) }}</td>
                 <td></td>
                 <td></td>
             </tr>
@@ -89,7 +89,7 @@
                 <td></td>
                 <td></td>
                 <td>SUBTOTAL</td>
-                <td>{{ $capitulo['subtotal'] }}</td>
+                <td>{{ number_format($capitulo['subtotal'],2) }}</td>
                 <td></td>
                 <td></td>
             </tr>
@@ -101,7 +101,7 @@
                 <td></td>
                 <td></td>
                 <td>GRAN TOTAL</td>
-                <td>{{ $data['total'] }}</td>
+                <td>{{ number_format($data['total'],2) }}</td>
                 <td></td>
                 <td></td>
             </tr>

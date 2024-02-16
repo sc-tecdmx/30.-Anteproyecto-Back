@@ -8,8 +8,10 @@ use Illuminate\Contracts\View\View;
 use Maatwebsite\Excel\Concerns\Exportable;
 use Maatwebsite\Excel\Concerns\FromView;
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;
+use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
+use Maatwebsite\Excel\Concerns\WithColumnFormatting;
 
-class CapitulosConceptos implements FromView, ShouldAutoSize
+class CapitulosConceptos implements FromView, ShouldAutoSize, WithColumnFormatting
 {
     use Exportable;
 
@@ -19,6 +21,13 @@ class CapitulosConceptos implements FromView, ShouldAutoSize
     public function __construct(array $data)
     {
         $this->data = $data;
+    }
+
+    public function columnFormats(): array
+    {
+        return [
+            'D' => NumberFormat::FORMAT_NUMBER
+        ];
     }
 
     public function view() : View

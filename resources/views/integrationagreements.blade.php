@@ -78,32 +78,32 @@
                 <td></td>
                 <td>1000</td>
                 <td>{{ $chapters['1000']['descripcion'] }}</td>
-                <td>{{ $chapters['1000']['total_capitulo'] }}</td>
-                <td>{{ $chapters['1000']['porcentaje'] }}%</td>
+                <td>{{ number_format($chapters['1000']['total_capitulo'],2) }}</td>
+                <td>{{ number_format($chapters['1000']['porcentaje'],2) }}%</td>
                 <td></td>
             </tr>
             <tr>
                 <td></td>
                 <td>2000</td>
                 <td>{{ $chapters['2000']['descripcion'] }}</td>
-                <td>{{ $chapters['2000']['total_capitulo'] }}</td>
-                <td>{{ $chapters['2000']['porcentaje'] }}%</td>
+                <td>{{ number_format($chapters['2000']['total_capitulo'],2) }}</td>
+                <td>{{ number_format($chapters['2000']['porcentaje'],2) }}%</td>
                 <td></td>
             </tr>
             <tr>
                 <td></td>
                 <td>3000</td>
                 <td>{{ $chapters['3000']['descripcion'] }}</td>
-                <td>{{ $chapters['3000']['total_capitulo'] }}</td>
-                <td>{{ $chapters['3000']['porcentaje'] }}%</td>
+                <td>{{ number_format($chapters['3000']['total_capitulo'],2) }}</td>
+                <td>{{ number_format($chapters['3000']['porcentaje'],2) }}%</td>
                 <td></td>
             </tr>
             <tr>
                 <td></td>
                 <td></td>
                 <td style="text-align: center; font-weight: bold;">SUBTOTAL</td>
-                <td style="font-weight: bold;">{{ $chapters['subtotal_gasto_corriente'] }}</td>
-                <td style="font-weight: bold;">{{ $chapters['porcentaje_gastos_corriente'] }}%</td>
+                <td style="font-weight: bold;">{{ number_format($chapters['subtotal_gasto_corriente'],2) }}</td>
+                <td style="font-weight: bold;">{{ number_format($chapters['porcentaje_gastos_corriente'],2) }}%</td>
                 <td></td>
             </tr>
             <tr>
@@ -121,16 +121,16 @@
                 <td></td>
                 <td>5000</td>
                 <td>{{ $chapters['5000']['descripcion'] }}</td>
-                <td>{{ $chapters['5000']['total_capitulo'] }}</td>
-                <td>{{ $chapters['5000']['porcentaje'] }}%</td>
+                <td>{{ number_format($chapters['5000']['total_capitulo'],2) }}</td>
+                <td>{{ number_format($chapters['5000']['porcentaje'],2) }}%</td>
                 <td></td>
             </tr>
             <tr>
                 <td></td>
                 <td></td>
                 <td style="text-align: center; font-weight: bold;">SUBTOTAL</td>
-                <td style="font-weight: bold;">{{ $chapters['5000']['total_capitulo'] }}</td>
-                <td style="font-weight: bold;">{{ $chapters['5000']['porcentaje'] }}%</td>
+                <td style="font-weight: bold;">{{ number_format($chapters['5000']['total_capitulo'],2) }}</td>
+                <td style="font-weight: bold;">{{ number_format($chapters['5000']['porcentaje'],2) }}%</td>
                 <td></td>
             </tr>
             <tr>
@@ -140,7 +140,7 @@
                 <td></td>
                 <td></td>
                 <td style="text-align: center; font-weight: bold;">GRAN TOTAL</td>
-                <td style="font-weight: bold;">{{ $chapters['total'] }}</td>
+                <td style="font-weight: bold;">{{ number_format($chapters['total'], 2) }}</td>
                 <td style="font-weight: bold;">100%</td>
                 <td></td>
             </tr>
