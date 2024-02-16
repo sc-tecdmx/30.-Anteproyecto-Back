@@ -219,7 +219,7 @@ class ReporteContratoController extends Controller
         return $exporter->download("capyconcepto.xlsx");
     }
 
-    public function agreementSplit(Request $request)
+    public function agreementSplit1(Request $request)
     {
         $exercise = $request->header('ejercicio');
 
@@ -256,6 +256,77 @@ class ReporteContratoController extends Controller
         }
 
         $exporter = new ContratosPartidas($data, $budget);
+
+        return $exporter->download("partidas.xlsx");
+    }
+
+    public function agreementSplit(Request $request)
+    {
+        $exercise = $request->header('ejercicio');
+
+        if(!$exercise) return response(["message" => "No existe el ejercicio"], Response::HTTP_UNPROCESSABLE_ENTITY);
+
+        $scenario = $request->header('escenario');
+
+        if(!$scenario) return response(["message" => "No existe el escenario"], Response::HTTP_UNPROCESSABLE_ENTITY);
+
+        $year = Ejercicio::find($exercise);
+
+        // $responsablesOperativos = json_decode($request->header('Responsables'), true);
+        $budget = Contrato::join('contrato_ejercicio', 'contratos.id', '=', 'contrato_ejercicio.contrato_id')
+            ->join('contrato_partida', 'contrato_partida.contrato_ejercicio_id', '=', 'contrato_ejercicio.id')
+            ->join('partidas', 'partidas.id', '=', 'contrato_partida.partida_id')
+            ->join('conceptos', 'conceptos.id', '=', 'partidas.concepto_id')
+            ->join('capitulos', 'capitulos.id', '=', 'conceptos.capitulo_id')
+            ->where('contrato_ejercicio.ejercicio_id', $exercise)
+            ->where('contrato_ejercicio.escenario', $scenario)
+            ->whereIn('capitulos.id', [1,2,3,5])
+            ->sum('contrato_ejercicio.importe');
+        
+        //$chapters = Capitulo::take(5)->get();
+        $chapters = Capitulo::whereIn('id', [1,2,3,5])->get();
+
+        $response['total'] = $budget;
+        $response['anio'] = $year->ejercicio;
+
+        foreach ($chapters as $chapter) {
+            $response['capitulos'][$chapter->id]['titulo'] = 'Capítulo '.$chapter->capitulo.' '.strtoupper($chapter->descripcion);
+
+            $splits = Partida::select('partidas.*')
+                ->join('conceptos', 'partidas.concepto_id', '=', 'conceptos.id')
+                ->join('capitulos', 'conceptos.capitulo_id', '=', 'capitulos.id')
+                ->join('contrato_partida', 'partidas.id', '=', 'contrato_partida.partida_id')
+                ->join('contrato_ejercicio', 'contrato_partida.contrato_ejercicio_id', '=', 'contrato_ejercicio.id')
+                ->where('contrato_ejercicio.ejercicio_id', $exercise)
+                ->where('contrato_ejercicio.escenario', $scenario)
+                ->where('capitulos.id', $chapter->id)
+                ->where('contrato_ejercicio.importe', '>', 0)
+                ->groupBy('partidas.id')
+                ->orderBy('partidas.id')
+                ->get();
+
+            $subtotalChapter = 0;
+
+            foreach ($splits as $split) {
+                $response['capitulos'][$chapter->id]['partidas'][$split->id]['numero'] = $split->numero;
+                $response['capitulos'][$chapter->id]['partidas'][$split->id]['descripcion'] = $split->descripcion;
+
+                $subtotalSplit = DB::table('contratos')
+                    ->join('contrato_ejercicio', 'contratos.id', '=', 'contrato_ejercicio.contrato_id')
+                    ->join('contrato_partida', 'contrato_ejercicio.id', '=', 'contrato_partida.contrato_ejercicio_id')
+                    ->join('partidas', 'contrato_partida.partida_id', '=', 'partidas.id')
+                    ->where('partidas.id', $split->id)
+                    ->where('contrato_ejercicio.ejercicio_id', $exercise)
+                    ->where('contrato_ejercicio.escenario', $scenario)
+                    ->sum('contrato_ejercicio.importe');
+                
+                $response['capitulos'][$chapter->id]['partidas'][$split->id]['subtotal'] = $subtotalSplit;
+                $subtotalChapter += $subtotalSplit;
+            }
+            $response['capitulos'][$chapter->id]['subtotal'] = $subtotalChapter;
+        }
+
+        $exporter = new ContratosPartidas($response);
 
         return $exporter->download("partidas.xlsx");
     }

@@ -17,26 +17,23 @@ class ContratosPartidas implements FromView, ShouldAutoSize, WithColumnFormattin
 
    /** @var array **/
     private $splits;
-    private $budget;
 
-    public function __construct(array $splits, float $budget)
+    public function __construct(array $splits)
     {
         $this->splits = $splits;
-        $this->budget = $budget;
     }
 
     public function columnFormats(): array
     {
         return [
-            'C' => NumberFormat::FORMAT_NUMBER
+            'D' => NumberFormat::FORMAT_NUMBER
         ];
     }
 
     public function view() : View
     {
         return view('agreementssplits', [
-            'splits' => $this->splits,
-            'budget' => $this->budget
+            'data' => $this->splits
         ]);
     }
 }

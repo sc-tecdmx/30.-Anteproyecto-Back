@@ -36,34 +36,74 @@
     <table>
         <thead>
             <tr>
-                <th colspan="3" style="font-weight: bold; font-size: 12px; text-align: center;">
-                    <div style="width: 40%;">
-                        <img src="{{ public_path('images/TECDMX-Imagen-_400px.png') }}" width="100%" alt="" style="display:block; margin: auto;">
+                <th colspan="6" style="font-weight: bold; font-size: 12px; text-align: center;">
+                    <div style="width: 20%;">
+                        <img src="{{ public_path('images/TECDMX-Imagen-_400px.png') }}" width="100%" alt="" style="margin: auto;">
                     </div>
-                    <div style="width: 60%;">
-                        <p>TRIBUNAL ELECTORAL DE LA CIUDAD DE MÉXICO</p>
-                        <p>SISTEMA ANTEPROYECTO</p>
-                        <p>PARTIDAS</p>
+                    <div style="width: 80%;">
+                        <p>Tribunal Electoral de la Ciudad de México</p>
+                        <p>Secretaría Administrativa</p>
+                        <p>Dirección de Recursos Financieros</p>
                     </div>
                 </th>
             </tr>
-            <tr style="background-color: #000000; color: white;">
-                <th style="font-weight: bold; text-align: center;">Número</th>
-                <th style="font-weight: bold; text-align: center;">Partida</th>
-                <th style="font-weight: bold; text-align: center;">Total</th>
+            <tr style="background-color: #000000; color: white; text-align: center;">
+                <th colspan="6" style="font-weight: bold; text-align: center;">ANTEPROYECTO DE PRESUPUESTO {{ $data['anio'] }}</th>
+            </tr>
+            <tr style="text-align: center; font-weight: bold;">
+                <th colspan="6" style="font-weight: bold; text-align: center;">Integración por Partida</th>
+            </tr>
+            <tr>
+                <th colspan="6"></th>
             </tr>
         </thead>
         <tbody>
-            @foreach ($splits as $split)
-                <tr>
-                    <td data-column="clave" style="text-align: center;">{{ $split['numero']; }}</td>
-                    <td data-column="partida">{{ $split['partida'] }}</td>
-                    <td data-column="concepto" style="text-align: right;">{{ number_format($split['total'],2) }}</td>
-                </tr>
+            <tr>
+                <td></td>
+                <td style="font-weight: bold; text-align: center;">Capítulo</td>
+                <td style="font-weight: bold; text-align: center;">Descripción</td>
+                <td style="font-weight: bold; text-align: center;">Importe</td>
+                <td style="font-weight: bold; text-align: center;"></td>
+                <td style="font-weight: bold; text-align: center;"></td>
+            </tr>
+            @foreach ($data['capitulos'] as $capitulo)
+            <tr>
+                <td></td>
+                <td></td>
+                <td style="font-weight: bold; text-align: center;">{{ $capitulo['titulo'] }}</td>
+                <td></td>
+                <td></td>
+                <td></td>
+            </tr>
+            @foreach ($capitulo['partidas'] as $partida )
+            <tr>
+                <td></td>
+                <td>{{ $partida['numero'] }}</td>
+                <td>{{ $partida['descripcion'] }}</td>
+                <td style="text-align: right;">{{ number_format($partida['subtotal'],2) }}</td>
+                <td></td>
+                <td></td>
+            </tr>
             @endforeach
             <tr>
-                <td colspan="2" style="font-weight: bold; text-align: right;">Total:</td>
-                <td data-column="total" style="text-align: right;">{{ number_format($budget,2) }}</td>
+                <td></td>
+                <td></td>
+                <td style="font-weight: bold; text-align: right;">SUBTOTAL</td>
+                <td style="text-align: right;">{{ number_format($capitulo['subtotal'],2) }}</td>
+                <td></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td colspan="6"></td>
+            </tr>
+            @endforeach
+            <tr>
+                <td></td>
+                <td></td>
+                <td style="font-weight: bold; text-align: right;">GRAN TOTAL</td>
+                <td style="font-weight: bold; text-align: right;">{{ number_format($data['total'],2) }}</td>
+                <td></td>
+                <td></td>
             </tr>
         </tbody>
     </table>
