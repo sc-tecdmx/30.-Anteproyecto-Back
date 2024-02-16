@@ -36,7 +36,7 @@
     <table>
         <thead>
             <tr>
-                <th colspan="3" style="font-weight: bold; font-size: 12px; text-align: center;">
+                <th colspan="2" style="font-weight: bold; font-size: 12px; text-align: center;">
                     <div style="width: 20%;">
                         <img src="{{ public_path('images/TECDMX-Imagen-_400px.png') }}" width="100%" alt="" style="margin: auto;">
                     </div>
@@ -49,21 +49,19 @@
             </tr>
             <tr style="background-color: #000000; color: white;">
                 <th style="font-weight: bold; text-align: center;">CLAVE</th>
-                <th style="font-weight: bold; text-align: center;">DESCRIPCION</th>
                 <th style="font-weight: bold; text-align: center;">IMPORTE</th>
             </tr>
         </thead>
         <tbody>
-            @foreach ($agreements as $agreement)
+            @foreach ($agreements as $clave => $total)
                 <tr>
-                    <td data-column="CLAVE" style="text-align: center;">{{ $agreement['clave']; }}</td>
-                    <td data-column="DESCRIPCION">{{ $agreement['descripcion'] }}</td>
-                    <td data-column="IMPORTE" style="text-align: right;">${{ number_format($agreement['total'], 2) }}</td>
+                    <td data-column="CLAVE" style="text-align: center;">{{ $clave; }}</td>
+                    <td data-column="IMPORTE" style="text-align: right;">{{ number_format($total, 2) }}</td>
                 </tr>
             @endforeach
             <tr>
-                <td colspan="2" style="font-weight: bold; text-align: right;">Total:</td>
-                <td style="font-weight: bold; text-align: right;">${{ number_format($budget, 2) }}</td>
+                <td style="font-weight: bold; text-align: right;">Total:</td>
+                <td style="font-weight: bold; text-align: right;">{{ number_format($budget, 2) }}</td>
             </tr>
         </tbody>
     </table>

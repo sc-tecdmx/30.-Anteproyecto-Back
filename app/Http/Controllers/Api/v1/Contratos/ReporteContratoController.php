@@ -15,6 +15,7 @@ use App\Exports\CapitulosConceptos;
 use App\Exports\Contratos;
 use App\Exports\ContratosPartidas;
 use App\Exports\ContratosProyectos;
+use App\Exports\ContratosProyectos1;
 use App\Exports\ContratosVersiones;
 use App\Models\Ejercicio;
 use App\Models\Mes;
@@ -301,42 +302,42 @@ class ReporteContratoController extends Controller
 
         if(!$scenario) return response(["message" => "No existe el escenario"], Response::HTTP_UNPROCESSABLE_ENTITY);
 
-        $projects = Proyecto::get();
-
-        $projects = Proyecto::select('proyectos.numero as pynum', 'subprogramas.numero as sbnum', 'programas.numero as pgnum', 'responsables_operativos.numero as ronum', 'unidades_responsables_gastos.numero as urnum', 'proyectos.descripcion')
-            ->join('proyecto_responsable_operativo', 'proyecto_responsable_operativo.proyecto_id', '=', 'proyectos.id')
-            ->join('responsables_operativos', 'proyecto_responsable_operativo.responsable_operativo_id', '=', 'responsables_operativos.id')
-            ->join('responsable_operativo_urg', 'responsable_operativo_urg.responsable_operativo_id', '=', 'responsables_operativos.id')
-            ->join('unidades_responsables_gastos', 'unidades_responsables_gastos.id', '=', 'responsable_operativo_urg.unidad_responsable_gasto_id')
-            ->join('proyecto_subprograma', 'proyecto_subprograma.proyecto_id', '=', 'proyectos.id')
-            ->join('subprogramas', 'proyecto_subprograma.subprograma_id', '=', 'subprogramas.id')
-            ->join('programa_subprograma', 'programa_subprograma.subprograma_id', '=', 'subprogramas.id')
-            ->join('programas', 'programas.id', '=', 'programa_subprograma.programa_id')
+        /* $budget = Contrato::join('contrato_ejercicio', 'contratos.id', '=', 'contrato_ejercicio.contrato_id')
+            ->where('contrato_ejercicio.ejercicio_id', $exercise)
+            ->where('contrato_ejercicio.escenario', $scenario)
+            ->sum('contrato_ejercicio.importe'); */
+        
+        $agreements = Contrato::join('contrato_ejercicio', 'contratos.id', '=', 'contrato_ejercicio.contrato_id')
+            ->where('contrato_ejercicio.ejercicio_id', $exercise)
+            ->where('contrato_ejercicio.escenario', $scenario)
+            ->orderBy('contratos.clave')
             ->get();
 
-        $response = [];
-        $total = 0;
+        $totals = [];
+        $budget = 0;
 
-        foreach ($projects as $project) {
-            $clave = $project->urnum . $project->ronum . $project->pgnum . $project->sbnum . $project->pynum;
-            $result = Contrato::join('contrato_ejercicio', 'contratos.id', '=', 'contrato_ejercicio.contrato_id')
-                ->where('contrato_ejercicio.ejercicio_id', $exercise)
-                ->where('contrato_ejercicio.escenario', $scenario)
-                ->where('contratos.clave', $clave)
-                ->sum('contrato_ejercicio.importe');
+        foreach ($agreements as $agreement) {
+            $clave = $agreement->clave;
+            $total = $agreement->importe;
+            $budget = $total + $budget;
 
-            $total += $result;
-            
-            $response[] = [
-                'clave' => $clave,
-                'descripcion' => $project->descripcion,
-                'total' => $result
-            ];
+            // Si la clave del contrato ya existe en el arreglo, sumar el total
+            if (array_key_exists($clave, $totals)) {
+                $totals[$clave] += $total;
+            } else { // Si la clave del contrato no existe en el arreglo, crearla con el total
+                $totals[$clave] = $total;
+            }
         }
 
-        $budget = $total;
+        /* $data = [
+            'budget' => $budget,
+            'contratos' => $totals
+        ];
 
-        $exporter = new ContratosProyectos($response, $budget);
+        return response()->json($data, Response::HTTP_OK); */
+
+
+        $exporter = new ContratosProyectos($totals, $budget);
 
         return $exporter->download("proyectos.xlsx");
     }
