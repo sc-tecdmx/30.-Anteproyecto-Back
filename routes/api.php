@@ -183,6 +183,7 @@ Route::group(['prefix' => 'v1/', 'namespace' => 'Api'], function () {
         Route::get('/contratos/ejecucion', [AnteproyectoController::class, 'export']);
         Route::get('/contratos/capitulos', [ReporteContratoController::class, 'chapters']);
         Route::get('/contratos/capitulos-conceptos', [ReporteContratoController::class, 'chapterConcept']);
+        Route::get('/contratos/partidas', [ReporteContratoController::class, 'agreementSplit']);
     });
 
     Route::prefix('configuracion')->group(function () {

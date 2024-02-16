@@ -13,6 +13,7 @@ use App\Models\DetalleContrato;
 use App\Exports\Capitulos;
 use App\Exports\CapitulosConceptos;
 use App\Exports\Contratos;
+use App\Exports\ContratosPartidas;
 use App\Exports\ContratosVersiones;
 use App\Models\Ejercicio;
 use App\Models\Mes;
@@ -216,5 +217,46 @@ class ReporteContratoController extends Controller
         // dd($exporter);
 
         return $exporter->download("capyconcepto.xlsx");
+    }
+
+    public function agreementSplit(Request $request)
+    {
+        $exercise = $request->header('ejercicio');
+
+        if(!$exercise) return response(["message" => "No existe el ejercicio"], Response::HTTP_UNPROCESSABLE_ENTITY);
+
+        $scenario = $request->header('escenario');
+
+        if(!$scenario) return response(["message" => "No existe el escenario"], Response::HTTP_UNPROCESSABLE_ENTITY);
+
+        $year = Ejercicio::find($exercise);
+
+        $splits = Partida::get();
+
+        $data = [];
+        $budget = 0;
+
+        foreach ($splits as $split) {
+            $resultado = DB::table('contratos')
+                ->join('contrato_ejercicio', 'contratos.id', '=', 'contrato_ejercicio.contrato_id')
+                ->join('contrato_partida', 'contrato_ejercicio.id', '=', 'contrato_partida.contrato_ejercicio_id')
+                ->join('partidas', 'contrato_partida.partida_id', '=', 'partidas.id')
+                ->where('partidas.id', $split->id)
+                ->where('contrato_ejercicio.ejercicio_id', $exercise)
+                ->where('contrato_ejercicio.escenario', $scenario)
+                ->sum('contrato_ejercicio.importe');
+            
+            $budget += $resultado;
+
+            $data[] = [
+                'numero' => $split->numero,
+                'partida' => $split->descripcion,
+                'total' => $resultado
+            ];
+        }
+
+        $exporter = new ContratosPartidas($data, $budget);
+
+        return $exporter->download("partidas.xlsx");
     }
 }
