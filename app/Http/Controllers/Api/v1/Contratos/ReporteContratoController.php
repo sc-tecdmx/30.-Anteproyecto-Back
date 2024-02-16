@@ -292,7 +292,7 @@ class ReporteContratoController extends Controller
         foreach ($chapters as $chapter) {
             $response['capitulos'][$chapter->id]['titulo'] = 'Capítulo '.$chapter->capitulo.' '.strtoupper($chapter->descripcion);
 
-            $splits = Partida::select('partidas.*')
+            $splits = Partida::select('partidas.id', 'partidas.concepto_id', 'partidas.numero', 'partidas.descripcion')
                 ->join('conceptos', 'partidas.concepto_id', '=', 'conceptos.id')
                 ->join('capitulos', 'conceptos.capitulo_id', '=', 'capitulos.id')
                 ->join('contrato_partida', 'partidas.id', '=', 'contrato_partida.partida_id')
@@ -301,7 +301,7 @@ class ReporteContratoController extends Controller
                 ->where('contrato_ejercicio.escenario', $scenario)
                 ->where('capitulos.id', $chapter->id)
                 ->where('contrato_ejercicio.importe', '>', 0)
-                ->groupBy('partidas.id')
+                ->groupBy('partidas.id', 'partidas.concepto_id', 'partidas.numero', 'partidas.descripcion')
                 ->orderBy('partidas.id')
                 ->get();
 
