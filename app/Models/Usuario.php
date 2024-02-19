@@ -41,18 +41,18 @@ class Usuario extends Authenticatable
         'password'
     ];
 
-    public function roles()
+    public function rol()
     {
-        return $this->belongsToMany(Rol::class);
+        return $this->belongsTo(Rol::class);
     }
 
-    public function areas()
+    public function area()
     {
-        return $this->belongsToMany(Area::class);
+        return $this->belongsTo(Area::class);
     }
 
     public function responsablesOperativos()
     {
-        return $this->belongsToMany(ResponsableOperativo::class);
+        return $this->belongsToMany(ResponsableOperativo::class, 'responsable_operativo_usuario', 'usuario_id', 'responsable_operativo_id');
     }
 }

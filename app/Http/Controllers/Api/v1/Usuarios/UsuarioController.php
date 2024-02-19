@@ -16,7 +16,7 @@ class UsuarioController extends Controller
 {
     public function index()
     {
-        $users = Usuario::with('roles', 'areas')->get();
+        $users = Usuario::with('rol', 'area')->get();
 
         $formattedUsers = $users->map(function ($user) {
             return [
@@ -26,8 +26,8 @@ class UsuarioController extends Controller
                 'apellido_materno' => $user->apellido_materno,
                 'usuario' => $user->usuario,
                 'email' => $user->email,
-                'rol' => $user->roles[0]->descripcion,
-                'area' => $user->areas[0]->nombre
+                'rol' => $user->rol->descripcion,
+                'area' => $user->area->nombre
             ];
         })->values()->toArray();
 
@@ -69,17 +69,9 @@ class UsuarioController extends Controller
         $user->password = Hash::make($request->password);
         $user->foto = $request->foto ?? '';
         $user->email = $request->email;
+        $user->rol_id = $request->rol_id;
+        $user->area_id = $request->area_id;
         $user->save();
-
-        $userRol = new RolUsuario();
-        $userRol->rol_id = $request->rol_id;
-        $userRol->usuario_id = $user->id;
-        $userRol->save();
-
-        $userArea = new AreaUsuario();
-        $userArea->area_id = $request->area_id;
-        $userArea->usuario_id = $user->id;
-        $userArea->save();
 
         return response()->json($user, Response::HTTP_CREATED);
     }
@@ -115,15 +107,9 @@ class UsuarioController extends Controller
 
         $dbUser->foto = $request->foto ?? '';
         $dbUser->email = $request->email;
+        $dbUser->rol_id = $request->rol_id;
+        $dbUser->area_id = $request->area_id;
         $dbUser->save();
-
-        $dbUserRol = RolUsuario::where('usuario_id', $id)->first();
-        $dbUserRol->rol_id = $request->rol_id;
-        $dbUserRol->save();
-
-        $dbUserArea = AreaUsuario::where('usuario_id', $id)->first();
-        $dbUserArea->area_id = $request->area_id;
-        $dbUserArea->save();
 
         return response()->json($dbUser, Response::HTTP_OK);
     }

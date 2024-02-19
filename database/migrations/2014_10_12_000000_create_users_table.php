@@ -23,7 +23,21 @@ return new class extends Migration
             $table->string('password');
             $table->string('email')->unique();
             $table->string('foto')->nullable();
+            $table->unsignedBigInteger('area_id');
+            $table->unsignedBigInteger('rol_id');
             $table->timestamps();
+
+            $table->foreign('area_id')
+                ->references('id')
+                ->on('areas')
+                ->onUpdate('cascade')
+                ->onDelete('restrict');
+
+            $table->foreign('rol_id')
+                ->references('id')
+                ->on('roles')
+                ->onUpdate('cascade')
+                ->onDelete('restrict');
         });
     }
 

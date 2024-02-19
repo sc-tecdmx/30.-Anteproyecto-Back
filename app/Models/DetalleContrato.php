@@ -23,4 +23,9 @@ class DetalleContrato extends Model
         'costo_unitario',
         'unidad_medida_id'
     ];
+
+    public function unidadMedida()
+    {
+        return $this->belongsto(UnidadMedidaAnteproyecto::class);
+    }
 }

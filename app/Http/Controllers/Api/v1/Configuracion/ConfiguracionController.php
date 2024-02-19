@@ -4,10 +4,11 @@ namespace App\Http\Controllers\Api\v1\Configuracion;
 
 use App\Http\Controllers\Controller;
 use App\Models\ContratoEjecucion;
-use App\Models\ContratoEjercicio;
+use App\Models\ContratoEjercicioProyecto;
 use App\Models\ContratoPartida;
 use App\Models\DetalleContrato;
 use App\Models\Ejercicio;
+use App\Models\EjercicioProyecto;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Illuminate\Support\Facades\DB;
@@ -60,52 +61,51 @@ class ConfiguracionController extends Controller
         $exercise->activo_anteproyecto = 1;
         $exercise->save();
 
-        $lastAgreementsExercise = ContratoEjercicio::where('ejercicio_id', $lastExercise->id)->where('escenario', 1)->get();
+        $lastProjectsExercise = EjercicioProyecto::where('ejercicio_id', $lastExercise->id)->get();
 
-        if (!$lastAgreementsExercise) return response(["message" => "No hay contratos anteriores registrados"], Response::HTTP_UNPROCESSABLE_ENTITY);
+        foreach($lastProjectsExercise as $lastProjectExercise) {
+            $newExerciseProject = new EjercicioProyecto();
+            $newExerciseProject->ejercicio_id = $exercise->id;
+            $newExerciseProject->proyecto_id = $lastProjectExercise->proyecto_id;
+            $newExerciseProject->save();
 
-        foreach ($lastAgreementsExercise as $lastAgreementExercise) {
-            // Insertar en base de datos la relación de los contratos con el nuevo ejercicio
-            $newAgreementExercise = new ContratoEjercicio();
-            $newAgreementExercise->ejercicio_id = $exercise->id;
-            $newAgreementExercise->contrato_id = $lastAgreementExercise->contrato_id;
-            $newAgreementExercise->escenario = 1;
-            $newAgreementExercise->cerrado = 0;
-            $newAgreementExercise->seleccionado = 0;
-            $newAgreementExercise->importe = $lastAgreementExercise->importe;
-            $newAgreementExercise->save();
+            $lastAgreementsExerciseProject = ContratoEjercicioProyecto::where('ejercicio_proyecto_id', $lastProjectExercise->id)->where('escenario', 1)->get();
 
-            $lastAgreementsSplits = ContratoPartida::where('contrato_ejercicio_id', $lastAgreementExercise->id)->get();
+            if (!$lastAgreementsExerciseProject) return response(["message" => "No hay contratos anteriores registrados"], Response::HTTP_UNPROCESSABLE_ENTITY);
 
-            if ($lastAgreementsSplits) {
-                foreach ($lastAgreementsSplits as $lastAgreementSplit) {
-                    $newAgreementSplit = new ContratoPartida();
-                    $newAgreementSplit->contrato_ejercicio_id = $newAgreementExercise->id;
-                    $newAgreementSplit->partida_id = $lastAgreementSplit->id;
-                    $newAgreementSplit->save();
+            foreach ($lastAgreementsExerciseProject as $lastAgreementExerciseProject) {
+                // Insertar en base de datos la relación de los contratos con el nuevo ejercicio
+                $newAgreementExerciseProject = new ContratoEjercicioProyecto();
+                $newAgreementExerciseProject->ejercicio_proyecto_id = $newExerciseProject->id;
+                $newAgreementExerciseProject->contrato_id = $lastAgreementExerciseProject->contrato_id;
+                $newAgreementExerciseProject->partida_id = $lastAgreementExerciseProject->partida_id;
+                $newAgreementExerciseProject->escenario = 1;
+                $newAgreementExerciseProject->cerrado = 0;
+                $newAgreementExerciseProject->seleccionado = 0;
+                $newAgreementExerciseProject->importe = $lastAgreementExerciseProject->importe;
+                $newAgreementExerciseProject->save();
+    
+                $lastDetailAgreementProject = DetalleContrato::where('contrato_ejercicio_proyecto_id', $lastAgreementExerciseProject->id)->first();
+    
+                if ($lastDetailAgreementProject) {
+                    $newDetailAgreement = new DetalleContrato();
+                    $newDetailAgreement->contrato_ejercicio_id = $newAgreementExerciseProject->id;
+                    $newDetailAgreement->cantidad = $lastDetailAgreementProject->cantidad;
+                    $newDetailAgreement->costo_unitario = $lastDetailAgreementProject->costo_unitario;
+                    $newDetailAgreement->unidad_medida_id = $lastDetailAgreementProject->unidad_medida_id;
+                    $newDetailAgreement->save();
                 }
-            }
-
-            $lastDetailAgreement = DetalleContrato::where('contrato_ejercicio_id', $lastAgreementExercise->id)->first();
-
-            if ($lastDetailAgreement) {
-                $newDetailAgreement = new DetalleContrato();
-                $newDetailAgreement->contrato_ejercicio_id = $newAgreementExercise->id;
-                $newDetailAgreement->cantidad = $lastDetailAgreement->cantidad;
-                $newDetailAgreement->costo_unitario = $lastDetailAgreement->costo_unitario;
-                $newDetailAgreement->unidad_medida_id = $lastDetailAgreement->unidad_medida_id;
-                $newDetailAgreement->save();
-            }
-
-            $lastAgreementsExecutions = ContratoEjecucion::where('contrato_ejercicio_id', $lastAgreementExercise->id)->get();
-
-            if ($lastAgreementsExecutions) {
-                foreach ($lastAgreementsExecutions as $lastAgreementExecution) {
-                    $newAgreementExecution = new ContratoEjecucion();
-                    $newAgreementExecution->contrato_ejercicio_id = $newAgreementExercise->id;
-                    $newAgreementExecution->mes_id = $lastAgreementExecution->mes_id;
-                    $newAgreementExecution->costo = $lastAgreementExecution->costo;
-                    $newAgreementExecution->save();
+    
+                $lastAgreementsExecutions = ContratoEjecucion::where('contrato_ejercicio_proyecto_id', $lastAgreementExerciseProject->id)->get();
+    
+                if ($lastAgreementsExecutions) {
+                    foreach ($lastAgreementsExecutions as $lastAgreementExecution) {
+                        $newAgreementExecution = new ContratoEjecucion();
+                        $newAgreementExecution->contrato_ejercicio_id = $newAgreementExerciseProject->id;
+                        $newAgreementExecution->mes_id = $lastAgreementExecution->mes_id;
+                        $newAgreementExecution->costo = $lastAgreementExecution->costo;
+                        $newAgreementExecution->save();
+                    }
                 }
             }
         }
@@ -123,27 +123,33 @@ class ConfiguracionController extends Controller
 
         if(!$scenario) return response(["message" => "No existe el escenario"], Response::HTTP_UNPROCESSABLE_ENTITY);
 
-        $lastScenario = ContratoEjercicio::where('ejercicio_id', $exercise)->max('escenario');
+        $lastScenario = ContratoEjercicioProyecto::join('ejercicio_proyecto','contrato_ejercicio_proyecto.ejercicio_proyecto_id','=','ejercicio_proyecto.id')
+            ->where('ejercicio_proyecto.ejercicio_id', $exercise)
+            ->max('contrato_ejercicio_proyecto.escenario');
 
         $newNumberScenario = $lastScenario + 1;
 
-        $firstScenarios = ContratoEjercicio::where('ejercicio_id', $exercise)->where('escenario', 1)->get();
+        $firstScenarios = ContratoEjercicioProyecto::join('ejercicio_proyecto','contrato_ejercicio_proyecto.ejercicio_proyecto_id','=','ejercicio_proyecto.id')
+            ->where('ejercicio_proyecto.ejercicio_id', $exercise)
+            ->where('contrato_ejercicio_proyecto.escenario', 1)
+            ->get();
 
         foreach ($firstScenarios as $firstScenario) {
-            $newScenario = new ContratoEjercicio();
-            $newScenario->ejercicio_id = $exercise;
+            $newScenario = new ContratoEjercicioProyecto();
             $newScenario->contrato_id = $firstScenario->contrato_id;
+            $newScenario->ejercicio_proyecto_id = $firstScenario->ejercicio_proyecto_id;
+            $newScenario->partida_id = $firstScenario->partida_id;
             $newScenario->escenario = $newNumberScenario;
             $newScenario->cerrado = 0;
             $newScenario->seleccionado = 0;
             $newScenario->importe = $firstScenario->importe;
             $newScenario->save();
 
-            $executionFirstScenario = ContratoEjecucion::where('contrato_ejercicio_id', $firstScenario->id)->get();
+            $executionFirstScenario = ContratoEjecucion::where('contrato_ejercicio_proyecto_id', $firstScenario->id)->get();
 
             foreach ($executionFirstScenario as $execution) {
                 $newExecution = new ContratoEjecucion();
-                $newExecution->contrato_ejercicio_id = $newScenario->id;
+                $newExecution->contrato_ejercicio_proyecto_id = $newScenario->id;
                 $newExecution->mes_id = $execution->mes_id;
                 $newExecution->costo = $execution->costo;
                 $newExecution->save();
@@ -153,81 +159,24 @@ class ConfiguracionController extends Controller
         return response()->json($exercise, Response::HTTP_CREATED);
     }
 
-    public function scenarioProof(Request $request)
-    {
-        $exercise = $request->header('ejercicio');
-
-        if(!$exercise) return response(["message" => "No existe el ejercicio"], Response::HTTP_UNPROCESSABLE_ENTITY);
-
-        $scenario = $request->header('escenario');
-
-        if(!$scenario) return response(["message" => "No existe el escenario"], Response::HTTP_UNPROCESSABLE_ENTITY);
-
-        $lastScenario = ContratoEjercicio::where('ejercicio_id', $exercise)->max('escenario');
-
-        $newNumberScenario = $lastScenario + 1;
-
-        $firstScenarios = ContratoEjercicio::where('ejercicio_id', $exercise)->where('escenario', 1)->get();
-
-        $contratosEjercicios = [];
-        $ejecucionesContratos = [];
-
-        foreach ($firstScenarios as $firstScenario) {
-            $contratosEjercicios[] = [
-                'id' => $firstScenario->id,
-                'ejercicio_id' => $exercise,
-                'contrato_id' => $firstScenario->contrato_id,
-                'escenario' => $newNumberScenario,
-                'cerrado' => 0,
-                'seleccionado' => 0,
-                'importe' => $firstScenario->importe
-            ];
-
-            $executionFirstScenario = ContratoEjecucion::where('contrato_ejercicio_id', $firstScenario->id)->get();
-
-            foreach ($executionFirstScenario as $execution) {
-                $ejecucionesContratos[] = [
-                    'contrato_ejercicio_id' => $firstScenario->id,
-                    'mes_id' => $execution->mes_id,
-                    'costo' => $execution->costo
-                ];
-            }
-        }
-
-        $data = [
-            'contratos' => $contratosEjercicios,
-            'ejecuciones' => $ejecucionesContratos
-        ];
-
-        return response()->json($data, Response::HTTP_CREATED);
-    }
-
     private function getAgreements($exercise, $scenario, $managers)
     {
         if (count($managers) == 0) {
-            $result = ContratoEjercicio::where('ejercicio_id', $exercise)->where('escenario', $scenario)->get();            
+            $result = ContratoEjercicioProyecto::join('ejercicio_proyecto','contrato_ejercicio_proyecto.ejercicio_proyecto_id','=','ejercicio_proyecto.id')
+                ->where('ejercicio_proyecto.ejercicio_id', $exercise)
+                ->where('contrato_ejercicio_proyecto.escenario', $scenario)
+                ->get();            
             return $result;
         }
 
-        $resultado = DB::table('responsables_operativos')
-                    ->select('responsables_operativos.numero as ronum', 'unidades_responsables_gastos.numero as urnum')
-                    ->join('responsable_operativo_urg', 'responsable_operativo_urg.responsable_operativo_id', '=', 'responsables_operativos.id')
-                    ->join('unidades_responsables_gastos', 'unidades_responsables_gastos.id', '=', 'responsable_operativo_urg.unidad_responsable_gasto_id')
-                    ->whereIn('responsables_operativos.id', $managers)
-                    ->get();
-
-        $rosurg = $resultado->map(function ($re) {
-            return [
-                $re->ronum . $re->urnum
-            ];
-        });
-
-        $result = ContratoEjercicio::where('ejercicio_id', $exercise)->where('escenario', $scenario)
-            ->join('contratos', 'contrato_ejercicio.contrato_id','=','contratos.id')
-            ->join('unidades_responsables_gastos', 'unidades_responsables_gastos.numero', '=', DB::raw('SUBSTRING(contratos.clave, 1, 2)'))
-            ->whereIn(DB::raw('SUBSTRING(contratos.clave, 1, 4)'), $rosurg)
+        $result = ContratoEjercicioProyecto::join('ejercicio_proyecto','contrato_ejercicio_proyecto.ejercicio_proyecto_id','=','ejercicio_proyecto.id')
+            ->join('proyectos', 'ejercicio_proyecto.proyecto_id','=','proyectos.id')
+            ->join('responsables_operativos','proyectos.responsable_operativo_id','=','responsables_operativos.id')
+            ->where('ejercicio_proyecto.ejercicio_id', $exercise)
+            ->where('contrato_ejercicio_proyecto.escenario', $scenario)
+            ->whereIn('responsables_operativos.id', $managers)
             ->get();
-        
+
         return $result;
     }
 
@@ -245,10 +194,14 @@ class ConfiguracionController extends Controller
 
         $result = $this->getAgreements($exercise, $scenario, $responsablesOperativos);
 
-        return response()->json($result, Response::HTTP_CREATED);
+        // return response()->json($result, Response::HTTP_CREATED);
 
         foreach ($result as $agreement) {
-            $agreementExercise = ContratoEjercicio::where('contrato_id', $agreement->contrato_id)->where('ejercicio_id', $exercise)->where('escenario', $scenario)->first();
+            $agreementExercise = ContratoEjercicioProyecto::join('ejercicio_proyecto','contrato_ejercicio_proyecto.ejercicio_proyecto_id','=','ejercicio_proyecto.id')
+                ->where('contrato_ejercicio_proyecto.contrato_id', $agreement->contrato_id)
+                ->where('ejercicio_proyecto.ejercicio_id', $exercise)
+                ->where('contrato_ejercicio_proyecto.escenario', $scenario)
+                ->first();
             $agreementExercise->cerrado = 1;
             $agreementExercise->save();
         }
@@ -271,7 +224,11 @@ class ConfiguracionController extends Controller
         $result = $this->getAgreements($exercise, $scenario, $responsablesOperativos);
 
         foreach ($result as $agreement) {
-            $agreementExercise = ContratoEjercicio::where('contrato_id', $agreement->contrato_id)->where('ejercicio_id', $exercise)->where('escenario', $scenario)->first();
+            $agreementExercise = ContratoEjercicioProyecto::join('ejercicio_proyecto','contrato_ejercicio_proyecto.ejercicio_proyecto_id','=','ejercicio_proyecto.id')
+                ->where('contrato_ejercicio_proyecto.contrato_id', $agreement->contrato_id)
+                ->where('ejercicio_proyecto.ejercicio_id', $exercise)
+                ->where('contrato_ejercicio_proyecto.escenario', $scenario)
+                ->first();
             $agreementExercise->cerrado = 0;
             $agreementExercise->save();
         }
@@ -294,7 +251,11 @@ class ConfiguracionController extends Controller
         $result = $this->getAgreements($exercise, $scenario, $responsablesOperativos);
 
         foreach ($result as $agreement) {
-            $agreementExercise = ContratoEjercicio::where('contrato_id', $agreement->contrato_id)->where('ejercicio_id', $exercise)->where('escenario', $scenario)->first();
+            $agreementExercise = ContratoEjercicioProyecto::join('ejercicio_proyecto','contrato_ejercicio_proyecto.ejercicio_proyecto_id','=','ejercicio_proyecto.id')
+                ->where('contrato_ejercicio_proyecto.contrato_id', $agreement->contrato_id)
+                ->where('ejercicio_proyecto.ejercicio_id', $exercise)
+                ->where('contrato_ejercicio_proyecto.escenario', $scenario)
+                ->first();
             $agreementExercise->seleccionado = 1;
             $agreementExercise->save();
         }

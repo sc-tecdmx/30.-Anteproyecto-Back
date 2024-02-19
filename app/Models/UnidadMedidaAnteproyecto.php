@@ -10,7 +10,7 @@ class UnidadMedidaAnteproyecto extends Model
     use HasFactory;
 
     /** @var string */
-    protected $table = 'unidades_medida_anteproyecto';
+    protected $table = 'unidades_medidas_anteproyecto';
 
     /**
      * The attributes that are mass assignable.

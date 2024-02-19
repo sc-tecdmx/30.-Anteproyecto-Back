@@ -13,22 +13,21 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::create('contrato_ejecucion', function (Blueprint $table) {
+        Schema::create('ejercicio_proyecto', function (Blueprint $table) {
             $table->bigIncrements('id');
-            $table->unsignedBigInteger('contrato_ejercicio_proyecto_id');
-            $table->unsignedBigInteger('mes_id');
-            $table->double('costo')->nullable();
+            $table->unsignedBigInteger('ejercicio_id');
+            $table->unsignedBigInteger('proyecto_id');
             $table->timestamps();
 
-            $table->foreign('contrato_ejercicio_proyecto_id')
+            $table->foreign('ejercicio_id')
                 ->references('id')
-                ->on('contrato_ejercicio_proyecto')
+                ->on('ejercicios')
                 ->onUpdate('cascade')
                 ->onDelete('restrict');
 
-            $table->foreign('mes_id')
+            $table->foreign('proyecto_id')
                 ->references('id')
-                ->on('meses')
+                ->on('proyectos')
                 ->onUpdate('cascade')
                 ->onDelete('restrict');
         });
@@ -41,6 +40,6 @@ return new class extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('contrato_ejecucion');
+        Schema::dropIfExists('ejercicio_proyecto');
     }
 };

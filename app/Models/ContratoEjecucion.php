@@ -10,7 +10,7 @@ class ContratoEjecucion extends Model
     use HasFactory;
 
     /** @var string */
-    protected $table = 'contratos_ejecucion';
+    protected $table = 'contrato_ejecucion';
 
     /**
      * The attributes that are mass assignable.
@@ -18,7 +18,7 @@ class ContratoEjecucion extends Model
      * @var array<int, string>
      */
     protected $fillable = [
-        'contrato_ejercicio_id',
+        'contrato_ejercicio_proyecto_id',
         'mes_id',
         'costo'
     ];

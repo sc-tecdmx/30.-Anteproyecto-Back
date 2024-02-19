@@ -51,8 +51,8 @@ class AnteproyectoController extends Controller
 
     private function getMonthlySums($contractId)
     {
-        return DB::table('contratos_ejecucion')
-            ->where('contrato_ejercicio_id', $contractId)
+        return DB::table('contrato_ejecucion')
+            ->where('contrato_ejercicio_proyecto_id', $contractId)
             ->pluck('costo', 'mes_id')
             ->toArray();
     }
@@ -65,45 +65,37 @@ class AnteproyectoController extends Controller
 
         $scenario = $request->header('escenario');
 
-        if(!$scenario) return response(["message" => "No existe el ejercicio"], Response::HTTP_UNPROCESSABLE_ENTITY);
+        if(!$scenario) return response(["message" => "No existe el escenario"], Response::HTTP_UNPROCESSABLE_ENTITY);
 
         $responsablesOperativos = json_decode($request->header('Responsables'), true);
 
-        if (count($responsablesOperativos) == 0) {
-            $result = Contrato::join('contrato_ejercicio', 'contratos.id', '=', 'contrato_ejercicio.contrato_id')
-                //->join('versiones', 'versiones.contrato_ejercicio_id', '=', 'contrato_ejercicio.id')
-                ->join('contrato_partida', 'contrato_partida.contrato_ejercicio_id', '=', 'contrato_ejercicio.id')
-                ->join('partidas', 'partidas.id', '=', 'contrato_partida.partida_id')
-                ->join('conceptos', 'conceptos.id', '=', 'partidas.concepto_id')
-                ->select(
-                    'contrato_ejercicio.id',
-                    'contratos.clave',
-                    'contratos.tipo',
-                    'contratos.parcialidad',
-                    'contratos.descripcion',
-                    'conceptos.numero as concepto',
-                    'contrato_ejercicio.importe',
-                    'partidas.numero as partida',
-                )
-                ->where('contrato_ejercicio.ejercicio_id', $exercise)
-                ->where('contrato_ejercicio.escenario', $scenario)
-                ->get();
-        } else {
-            $result = Contrato::join('contrato_ejercicio', 'contratos.id', '=', 'contrato_ejercicio.contrato_id')
-                //->join('versiones', 'versiones.contrato_ejercicio_id', '=', 'contrato_ejercicio.id')
-                ->join('contrato_partida', 'contrato_partida.contrato_ejercicio_id', '=', 'contrato_ejercicio.id')
-                ->join('partidas', 'partidas.id', '=', 'contrato_partida.partida_id')
-                ->select(
-                    'contrato_ejercicio.id',
-                    'contratos.clave',
-                    'contrato_ejercicio.importe',
-                    'partidas.numero as partida'
-                )
-                ->where('contrato_ejercicio.ejercicio_id', $exercise)
-                ->where('contrato_ejercicio.escenario', $scenario)
-                ->whereIn(DB::raw('SUBSTRING(contratos.clave, 3, 2)'), $responsablesOperativos)
-                ->get();
+        $result = Contrato::join('contrato_ejercicio_proyecto','contratos.id','=','contrato_ejercicio_proyecto.contrato_id')
+            ->join('ejercicio_proyecto','contrato_ejercicio_proyecto.ejercicio_proyecto_id','=','ejercicio_proyecto.id')
+            ->join('partidas','contrato_ejercicio_proyecto.partida_id','=','partidas.id')
+            ->join('conceptos', 'conceptos.id', '=', 'partidas.concepto_id')
+            ->join('proyectos', 'ejercicio_proyecto.proyecto_id', '=', 'proyectos.id')
+            ->join('subprogramas', 'proyectos.subprograma_id', '=', 'subprogramas.id')
+            ->join('programas', 'subprogramas.programa_id', '=', 'programas.id')
+            ->join('responsables_operativos', 'proyectos.responsable_operativo_id', '=', 'responsables_operativos.id')
+            ->join('unidades_responsables_gastos', 'responsables_operativos.unidad_responsable_gasto_id', '=', 'unidades_responsables_gastos.id')
+            ->select(
+                DB::raw('CONCAT(unidades_responsables_gastos.numero, responsables_operativos.numero, programas.numero, subprogramas.numero, proyectos.numero) AS clave'),
+                'contrato_ejercicio_proyecto.id',
+                'contratos.tipo',
+                'contratos.parcialidad',
+                'contratos.descripcion',
+                'conceptos.numero as concepto',
+                'contrato_ejercicio_proyecto.importe',
+                'partidas.numero as partida',
+            )
+            ->where('ejercicio_proyecto.ejercicio_id', $exercise)
+            ->where('contrato_ejercicio_proyecto.escenario', $scenario);
+        
+        if (count($responsablesOperativos) > 0) {
+            $result->whereIn('responsables_operativos.id', $responsablesOperativos);
         }
+
+        $result = $result->get();
 
         $formattedResult = $result->map(function ($exec) {
             $monthlySums = $this->getMonthlySums($exec->id);

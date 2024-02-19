@@ -10,6 +10,7 @@ use App\Models\ContratoPartida;
 use App\Models\DetalleContrato;
 use App\Exports\Contratos;
 use App\Exports\ContratosVersiones;
+use App\Models\ContratoEjercicioProyecto;
 use App\Models\Mes;
 use App\Models\Partida;
 use App\Models\Programa;
@@ -38,137 +39,113 @@ class ContratoController extends Controller
         $responsablesOperativos = json_decode($request->header('Responsables'), true);
 
         if (count($responsablesOperativos) == 0) {
-            $result = Contrato::join('contrato_ejercicio', 'contratos.id', '=', 'contrato_ejercicio.contrato_id')
-                ->join('contrato_partida', 'contrato_partida.contrato_ejercicio_id', '=', 'contrato_ejercicio.id')
-                ->join('partidas', 'partidas.id', '=', 'contrato_partida.partida_id')
-                ->join('conceptos', 'conceptos.id', '=', 'partidas.concepto_id')
-                ->join('capitulos', 'capitulos.id', '=', 'conceptos.capitulo_id')
-                ->join('unidades_responsables_gastos', 'unidades_responsables_gastos.numero', '=', DB::raw('SUBSTRING(contratos.clave, 1, 2)'))
+            $contratos = Contrato::join('contrato_ejercicio_proyecto', 'contratos.id', '=', 'contrato_ejercicio_proyecto.contrato_id')
+                ->join('ejercicio_proyecto', 'contrato_ejercicio_proyecto.ejercicio_proyecto_id', '=', 'ejercicio_proyecto.id')
+                ->join('ejercicios', 'ejercicio_proyecto.ejercicio_id', '=', 'ejercicios.id')
+                ->join('partidas', 'contrato_ejercicio_proyecto.partida_id', '=', 'partidas.id')
+                ->join('conceptos', 'partidas.concepto_id', '=', 'conceptos.id')
+                ->join('capitulos', 'conceptos.capitulo_id', '=', 'capitulos.id')
+                ->join('proyectos', 'ejercicio_proyecto.proyecto_id', '=', 'proyectos.id')
+                ->join('subprogramas', 'proyectos.subprograma_id', '=', 'subprogramas.id')
+                ->join('programas', 'subprogramas.programa_id', '=', 'programas.id')
+                ->join('responsables_operativos', 'proyectos.responsable_operativo_id', '=', 'responsables_operativos.id')
+                ->join('unidades_responsables_gastos', 'responsables_operativos.unidad_responsable_gasto_id', '=', 'unidades_responsables_gastos.id')
                 ->select(
-                    'contratos.id',
-                    'contratos.clave',
-                    'contratos.descripcion',
-                    'partidas.numero as partida',
-                    'conceptos.numero as concepto',
-                    'capitulos.capitulo',
+                    DB::raw('CONCAT(unidades_responsables_gastos.numero, responsables_operativos.numero, programas.numero, subprogramas.numero, proyectos.numero) AS clave'),
                     'unidades_responsables_gastos.numero as urg',
-                    'contrato_ejercicio.cerrado'
+                    'partidas.numero as partida',
+                    'capitulos.capitulo',
+                    'conceptos.numero as concepto',
+                    'contratos.descripcion',
+                    'contrato_ejercicio_proyecto.id'
                 )
-                ->where('contrato_ejercicio.ejercicio_id', $exercise)
-                ->where('contrato_ejercicio.escenario', $scenario)
-                ->groupBy('contratos.clave', 'contratos.id', 'contratos.descripcion', 'partidas.numero', 'conceptos.numero', 'capitulos.capitulo', 'unidades_responsables_gastos.numero', 'contrato_ejercicio.cerrado')
+                ->where('ejercicios.id', $exercise)
+                ->where('contrato_ejercicio_proyecto.escenario', $scenario)
                 ->get();
         } else {
-            $resultado = DB::table('responsables_operativos')
-                    ->select('responsables_operativos.numero as ronum', 'unidades_responsables_gastos.numero as urnum')
-                    ->join('responsable_operativo_urg', 'responsable_operativo_urg.responsable_operativo_id', '=', 'responsables_operativos.id')
-                    ->join('unidades_responsables_gastos', 'unidades_responsables_gastos.id', '=', 'responsable_operativo_urg.unidad_responsable_gasto_id')
-                    ->whereIn('responsables_operativos.id', $responsablesOperativos)
-                    ->get();
-
-            $rosurg = $resultado->map(function ($re) {
-                return [
-                    $re->urnum . $re->ronum
-                ];
-            });
-
-            $result = Contrato::join('contrato_ejercicio', 'contratos.id', '=', 'contrato_ejercicio.contrato_id')
-                ->join('contrato_partida', 'contrato_partida.contrato_ejercicio_id', '=', 'contrato_ejercicio.id')
-                ->join('partidas', 'partidas.id', '=', 'contrato_partida.partida_id')
-                ->join('conceptos', 'conceptos.id', '=', 'partidas.concepto_id')
-                ->join('capitulos', 'capitulos.id', '=', 'conceptos.capitulo_id')
-                ->join('unidades_responsables_gastos', 'unidades_responsables_gastos.numero', '=', DB::raw('SUBSTRING(contratos.clave, 1, 2)'))
+            $contratos = Contrato::join('contrato_ejercicio_proyecto', 'contratos.id', '=', 'contrato_ejercicio_proyecto.contrato_id')
+                ->join('ejercicio_proyecto', 'contrato_ejercicio_proyecto.ejercicio_proyecto_id', '=', 'ejercicio_proyecto.id')
+                ->join('ejercicios', 'ejercicio_proyecto.ejercicio_id', '=', 'ejercicios.id')
+                ->join('partidas', 'contrato_ejercicio_proyecto.partida_id', '=', 'partidas.id')
+                ->join('conceptos', 'partidas.concepto_id', '=', 'conceptos.id')
+                ->join('capitulos', 'conceptos.capitulo_id', '=', 'capitulos.id')
+                ->join('proyectos', 'ejercicio_proyecto.proyecto_id', '=', 'proyectos.id')
+                ->join('subprogramas', 'proyectos.subprograma_id', '=', 'subprogramas.id')
+                ->join('programas', 'subprogramas.programa_id', '=', 'programas.id')
+                ->join('responsables_operativos', 'proyectos.responsable_operativo_id', '=', 'responsables_operativos.id')
+                ->join('unidades_responsables_gastos', 'responsables_operativos.unidad_responsable_gasto_id', '=', 'unidades_responsables_gastos.id')
                 ->select(
-                    'contratos.id',
-                    'contratos.clave',
-                    'contratos.descripcion',
-                    'partidas.numero as partida',
-                    'conceptos.numero as concepto',
-                    'capitulos.capitulo',
+                    DB::raw('CONCAT(unidades_responsables_gastos.numero, responsables_operativos.numero, programas.numero, subprogramas.numero, proyectos.numero) AS clave'),
                     'unidades_responsables_gastos.numero as urg',
-                    'contrato_ejercicio.cerrado'
+                    'partidas.numero as partida',
+                    'capitulos.capitulo',
+                    'conceptos.numero as concepto',
+                    'contratos.descripcion',
+                    'contrato_ejercicio_proyecto.id'
                 )
-                ->where('contrato_ejercicio.ejercicio_id', $exercise)
-                ->where('contrato_ejercicio.escenario', $scenario)
-                ->whereIn(DB::raw('SUBSTRING(contratos.clave, 1, 4)'), $rosurg)
-                ->groupBy('contratos.clave', 'contratos.id', 'contratos.descripcion', 'partidas.numero', 'conceptos.numero', 'capitulos.capitulo', 'unidades_responsables_gastos.numero', 'contrato_ejercicio.cerrado')
+                ->where('ejercicios.id', 6)
+                ->where('contrato_ejercicio_proyecto.escenario', 1)
+                ->whereIn('responsables_operativos.id', $responsablesOperativos)
                 ->get();
         }
-        return response()->json($result, Response::HTTP_OK);
+        return response()->json($contratos, Response::HTTP_OK);
     }
 
     public function show($id, Request $request)
     {
-        $agreement = Contrato::find($id);
-
-        if (!$agreement) return response()->json(['message' => 'Contrato no encontrado'], Response::HTTP_UNPROCESSABLE_ENTITY);
-
         $exercise = $request->header('ejercicio');
 
         if (!$exercise) return response()->json(['message' => 'No existe ejercicio'], Response::HTTP_UNPROCESSABLE_ENTITY);
 
-        $agreementExercise = ContratoEjercicio::where('contrato_id', $agreement->id)->where('ejercicio_id', $exercise)->first();
+        $scenario = $request->header('escenario');
 
-        if (!$agreementExercise) return response()->json(['message' => 'No se encuentra relación entre el ejercicio y el contrato'], Response::HTTP_UNPROCESSABLE_ENTITY);
+        if(!$scenario) return response(["message" => "No existe el escenario"], Response::HTTP_UNPROCESSABLE_ENTITY);
 
-        $result = Contrato::join('contrato_ejercicio', 'contratos.id', '=', 'contrato_ejercicio.contrato_id')
-            // ->join('detalles_contratos', 'detalles_contratos.contrato_ejercicio_id', '=', 'contrato_ejercicio.id')
-            // ->join('unidades_medida', 'unidades_medida.id = detalles_contratos.unidad_medida_id')
-            // ->join('versiones', 'versiones.contrato_ejercicio_id', '=', 'contrato_ejercicio.id')
-            ->join('contrato_partida', 'contrato_partida.contrato_ejercicio_id', '=', 'contrato_ejercicio.id')
-            ->join('partidas', 'partidas.id', '=', 'contrato_partida.partida_id')
-            ->join('conceptos', 'conceptos.id', '=', 'partidas.concepto_id')
-            ->join('capitulos', 'capitulos.id', '=', 'conceptos.capitulo_id')
-            ->join('unidades_responsables_gastos', 'unidades_responsables_gastos.numero', '=', DB::raw('SUBSTRING(contratos.clave, 1, 2)'))
-            ->select(
-                'contrato_ejercicio.importe',
-                'partidas.numero as partida',
-                'partidas.descripcion as descripcionp',
-                'partidas.id as partida_id',
-                'conceptos.numero as concepto',
-                'conceptos.descripcion as descripcionc',
-                'capitulos.capitulo',
-                'capitulos.descripcion as descripcionch',
-                'unidades_responsables_gastos.numero as urg',
-                'unidades_responsables_gastos.nombre',
-            )
-            ->where('contrato_ejercicio.ejercicio_id', $exercise)
-            ->where('contratos.id', $agreement->id)
-            ->first();
+        $contrato = Contrato::join('contrato_ejercicio_proyecto', 'contratos.id', '=', 'contrato_ejercicio_proyecto.contrato_id')
+                ->join('ejercicio_proyecto', 'contrato_ejercicio_proyecto.ejercicio_proyecto_id', '=', 'ejercicio_proyecto.id')
+                ->join('ejercicios', 'ejercicio_proyecto.ejercicio_id', '=', 'ejercicios.id')
+                ->join('partidas', 'contrato_ejercicio_proyecto.partida_id', '=', 'partidas.id')
+                ->join('conceptos', 'partidas.concepto_id', '=', 'conceptos.id')
+                ->join('capitulos', 'conceptos.capitulo_id', '=', 'capitulos.id')
+                ->join('proyectos', 'ejercicio_proyecto.proyecto_id', '=', 'proyectos.id')
+                ->join('subprogramas', 'proyectos.subprograma_id', '=', 'subprogramas.id')
+                ->join('programas', 'subprogramas.programa_id', '=', 'programas.id')
+                ->join('responsables_operativos', 'proyectos.responsable_operativo_id', '=', 'responsables_operativos.id')
+                ->join('unidades_responsables_gastos', 'responsables_operativos.unidad_responsable_gasto_id', '=', 'unidades_responsables_gastos.id')
+                ->select(
+                    DB::raw('CONCAT(unidades_responsables_gastos.numero, responsables_operativos.numero, programas.numero, subprogramas.numero, proyectos.numero) AS clave'),
+                    'contrato_ejercicio_proyecto.importe',
+                    'partidas.numero as partida',
+                    'partidas.descripcion as descripcion_partida',
+                    'partidas.id as partida_id',
+                    'conceptos.numero as concepto',
+                    'conceptos.descripcion as concepto_descripcion',
+                    'capitulos.capitulo',
+                    'capitulos.descripcion as capitulo_descripcion',
+                    'unidades_responsables_gastos.numero as urg',
+                    'unidades_responsables_gastos.nombre',
+                    'contrato_ejercicio_proyecto.importe',
+                    'contratos.parcialidad',
+                    'contratos.tipo',
+                    'contratos.descripcion',
+                    'contrato_ejercicio_proyecto.id',
+                    'ejercicio_proyecto.id as epid'
+                )
+                ->where('ejercicios.id', $exercise)
+                ->where('contrato_ejercicio_proyecto.escenario', $scenario)
+                ->where('contrato_ejercicio_proyecto.id', $id)
+                ->first();
         
-        $response = [
-            'id' => $agreement->id,
-            'clave' => $agreement->clave,
-            'descripcion' => $agreement->descripcion,
-            'partida' => $result->partida,
-            'descripcion_partida' => $result->descripcionp,
-            'partida_id' => $result->partida_id,
-            'concepto' => $result->concepto,
-            'concepto_descripcion' => $result->descripcionc,
-            'capitulo' => $result->capitulo,
-            'capitulo_descripcion' => $result->descripcionch,
-            'urg' => $result->urg,
-            'urg_nombre' => $result->nombre,
-            'importe' => $result->importe,
-            'parcialidad' => $agreement->parcialidad,
-            'tipo' => $agreement->tipo
-        ];
-        
-        $detail = DetalleContrato::where('contrato_ejercicio_id', $agreementExercise->id)->first();
+        $detail = DetalleContrato::where('contrato_ejercicio_proyecto_id', $contrato->id)->with('unidadMedida')->first();
 
         if ($detail) {
-            $response['cantidad'] = $detail->cantidad;
-            $response['costo_unitario'] = $detail->costo_unitario;
-
-            $measurement = UnidadMedidaAnteproyecto::where('id', $detail->unidad_medida_id)->first();
-
-            if($measurement) {
-                $response['unidad_medida'] = $measurement->descripcion;
-                $response['unidad_medida_id'] = $detail->unidad_medida_id;
-            }
+            $contrato['cantidad'] = $detail->cantidad;
+            $contrato['costo_unitario'] = $detail->costo_unitario;
+            $contrato['unidad_medida'] = $detail->unidadMedida->descripcion;
+            $contrato['unidad_medida_id'] = $detail->unidad_medida_id;
         }
 
-        return response()->json($response, Response::HTTP_OK);
+        return response()->json($contrato, Response::HTTP_OK);
     }
     
 
@@ -183,64 +160,29 @@ class ContratoController extends Controller
         if(!$scenario) return response(["message" => "No existe el escenario"], Response::HTTP_UNPROCESSABLE_ENTITY);
 
         $request->validate([
-            'clave' => 'required',
             'descripcion' => 'required',
-            'importe' => 'required',
             'parcialidad' => 'required',
             'tipo' => 'required',
-            'partida_id' => 'required'
+            'ejercicio_proyecto_id' => 'required',
+            'partida_id' => 'required',
+            'importe' => 'required',
         ]);
 
-        $clave = str_split($request->clave, 2);
-
-        if (strlen($request->clave) < 10) {
-            return response(["message" => "La longitud de la clave no es la correcta"], Response::HTTP_UNPROCESSABLE_ENTITY);
-        }
-
-        $urg = UnidadResponsableGasto::where('numero', $clave[0])->first();
-
-        if (!$urg) return response(["message" => "La URG no existe"], Response::HTTP_UNPROCESSABLE_ENTITY);
-
-        $ro = ResponsableOperativo::where('numero', $clave[1])->first();
-
-        if(!$ro) return response(["message" => "El responsable operativo no existe"], Response::HTTP_UNPROCESSABLE_ENTITY);
-
-        // programa
-        $pg = Programa::where('numero', $clave[2])->first();
-
-        if (!$pg) return response(["message" => "El programa no existe"], Response::HTTP_UNPROCESSABLE_ENTITY);
-        
-        // subprogrma
-        $sp = Subprograma::where('numero', $clave[3])->first();
-
-        if (!$sp) return response(["message" => "El subprograma no existe"], Response::HTTP_UNPROCESSABLE_ENTITY);
-
-        // proyecto
-        $py = Proyecto::where('numero', $clave[4])->first();
-
-        if (!$py) return response(["message" => "El proyecto no existe"], Response::HTTP_UNPROCESSABLE_ENTITY);
-
         $agreement = new Contrato();
-        $agreement->clave = $request->clave;
         $agreement->descripcion = $request->descripcion;
-        // $agreement->importe = $request->importe;
         $agreement->parcialidad = $request->parcialidad;
         $agreement->tipo = $request->tipo;
         $agreement->save();
 
-        $agreementExercise = new ContratoEjercicio();
-        $agreementExercise->contrato_id = $agreement->id;
-        $agreementExercise->ejercicio_id = $exercise;
-        $agreementExercise->escenario = $scenario;
-        $agreementExercise->cerrado = 0;
-        $agreementExercise->seleccionado = 0;
-        $agreementExercise->importe = $request->importe;
-        $agreementExercise->save();
-
-        $split = new ContratoPartida();
-        $split->contrato_ejercicio_id = $agreementExercise->id;
-        $split->partida_id = $request->partida_id;
-        $split->save();
+        $agreementExerciseProject = new ContratoEjercicioProyecto();
+        $agreementExerciseProject->contrato_id = $agreement->id;
+        $agreementExerciseProject->ejercicio_proyecto_id = $request->ejercicio_proyecto_id;
+        $agreementExerciseProject->partida_id = $request->partida_id;
+        $agreementExerciseProject->importe = $request->importe;
+        $agreementExerciseProject->escenario = $scenario;
+        $agreementExerciseProject->cerrado = 0;
+        $agreementExerciseProject->seleccionado = 1;
+        $agreementExerciseProject->save();
 
         $months = Mes::get();
 
@@ -248,7 +190,7 @@ class ContratoController extends Controller
 
         foreach ($months as $month){
             $execution = new ContratoEjecucion();
-            $execution->contrato_ejercicio_id = $agreementExercise->id;
+            $execution->contrato_ejercicio_proyecto_id = $agreementExerciseProject->id;
             $execution->mes_id = $month->id;
             $execution->costo = 0.0;
             $execution->save();
@@ -268,35 +210,32 @@ class ContratoController extends Controller
 
         if(!$scenario) return response(["message" => "No existe el escenario"], Response::HTTP_UNPROCESSABLE_ENTITY);
 
-        $agreement = Contrato::find($id);
+        $agreementExercise = ContratoEjercicioProyecto::find($id);
 
-        if(!$agreement) return response(["message" => "No existe el contrato"], Response::HTTP_UNPROCESSABLE_ENTITY);
+        if(!$agreementExercise) return response(["message" => "No existe el contrato"], Response::HTTP_UNPROCESSABLE_ENTITY);
 
-        $agreementExercise = ContratoEjercicio::where('contrato_id', $id)->where('contrato_id', $id)->where('escenario', $scenario)->first();
+        $agreement = Contrato::where('id', $agreementExercise->contrato_id)->first();
 
         if(!$agreementExercise) return response(["message" => "No existe el ejercicio con el contrato"], Response::HTTP_UNPROCESSABLE_ENTITY);
 
         $request->validate([
-            'clave' => 'required',
             'descripcion' => 'required',
-            'importe' => 'required',
             'parcialidad' => 'required',
             'tipo' => 'required',
-            'partida_id' => 'required'
+            'clave' => 'required',
+            'partida_id' => 'required',
+            'importe' => 'required',
         ]);
 
-        $agreement->clave = $request->clave;
         $agreement->descripcion = $request->descripcion;
         $agreement->parcialidad = $request->parcialidad;
         $agreement->tipo = $request->tipo;
         $agreement->save();
 
+        $agreementExercise->ejercicio_proyecto_id = $request->clave;
+        $agreementExercise->partida_id = $request->partida_id;
         $agreementExercise->importe = $request->importe;
         $agreementExercise->save();
-
-        $split = ContratoPartida::where('contrato_ejercicio_id', $agreementExercise->id)->first();
-        $split->partida_id = $request->partida_id;
-        $split->save();
 
         return response()->json($agreement, Response::HTTP_CREATED);
     }
@@ -315,14 +254,14 @@ class ContratoController extends Controller
         $request->validate([
             'cantidad' => 'required',
             'costo_unitario' => 'required',
-            'unidad_medida_id' => 'required|exists:unidades_medida_anteproyecto,id'
+            'unidad_medida_id' => 'required|exists:unidades_medidas_anteproyecto,id'
         ]);
 
-        $agreementExercise = ContratoEjercicio::where('contrato_id', $id)->where('ejercicio_id', $exercise)->where('escenario', $scenario)->first();
+        $agreementExercise = ContratoEjercicioProyecto::find($id);
 
         if(!$agreementExercise) return response(["message" => "No hay contrato en este ejercicio"], Response::HTTP_UNPROCESSABLE_ENTITY);
 
-        $dbDetail = DetalleContrato::where('contrato_ejercicio_id', $agreementExercise->id)->first();
+        $dbDetail = DetalleContrato::where('contrato_ejercicio_proyecto_id', $agreementExercise->id)->first();
 
         if ($dbDetail) {
             $dbDetail->fill($request->all());
@@ -332,45 +271,13 @@ class ContratoController extends Controller
         }
 
         $detail = new DetalleContrato();
-        $detail->contrato_ejercicio_id = $agreementExercise->id;
+        $detail->contrato_ejercicio_proyecto_id = $agreementExercise->id;
         $detail->cantidad = $request->cantidad;
         $detail->costo_unitario = $request->costo_unitario;
         $detail->unidad_medida_id = $request->unidad_medida_id;
         $detail->save();
 
         return response()->json($detail, Response::HTTP_CREATED);
-    }
-
-    public function updateDetail($id, Request $request)
-    {
-        $exercise = $request->header('ejercicio');
-
-        if(!$exercise) return response(["message" => "No existe el ejercicio"], Response::HTTP_UNPROCESSABLE_ENTITY);
-
-        $scenario = $request->header('escenario');
-
-        if(!$scenario) return response(["message" => "No existe el escenario"], Response::HTTP_UNPROCESSABLE_ENTITY);
-
-        $agreementExercise = ContratoEjercicio::where('contrato_id', $id)->where('ejercicio_id', $exercise)->where('escenario', $scenario)->first();
-
-        if(!$agreementExercise) return response(["message" => "No hay contrato en este ejercicio"], Response::HTTP_UNPROCESSABLE_ENTITY);
-
-        $request->validate([
-            'cantidad' => 'required',
-            'costo_unitario' => 'required',
-            'unidad_medida_id' => 'required|exists:unidades_medida_anteproyecto,id'
-        ]);
-
-        $dbDetail = DetalleContrato::where('contrato_ejercicio_id', $agreementExercise->id)->first();
-
-        if (!$dbDetail) {
-            return response(["message" => "Detalle no encontrado"], Response::HTTP_UNPROCESSABLE_ENTITY);
-        }
-
-        $dbDetail->fill($request->all());
-        $dbDetail->save();
-
-        return response($dbDetail, Response::HTTP_OK);
     }
 
     // Almacenamiento de ejecucion del contrato en los meses
@@ -380,30 +287,30 @@ class ContratoController extends Controller
 
         if(!$exercise) return response(["message" => "No existe el ejercicio"], Response::HTTP_UNPROCESSABLE_ENTITY);
 
+        $scenario = $request->header('escenario');
+
+        if(!$scenario) return response(["message" => "No existe el escenario"], Response::HTTP_UNPROCESSABLE_ENTITY);
+
         $request->validate([
             '*.mes_id' => 'required',
             '*.costo' => 'required'
         ]);
 
-        $agreementExercise = ContratoEjercicio::where('contrato_id', $id)->where('ejercicio_id', $exercise)->first();
+        $agreementExercise = ContratoEjercicioProyecto::find($id);
 
         if(!$agreementExercise) return response(["message" => "No hay contrato en este ejercicio"], Response::HTTP_UNPROCESSABLE_ENTITY);
 
-        $executions = [];
+        $executions = $request->all();
+        $data = [];
 
-        foreach ($request->all() as $data) {
-            $execution = ContratoEjecucion::find($data['id']);
-            $execution->costo = $data['costo'] ?? 0;
-            $execution->save();
-            $executions[] = $execution;
+        foreach ($executions as $execution) {
+            $dbExecution = ContratoEjecucion::find($execution['id']);
+            $dbExecution->costo = $execution['costo'] ?? 0;
+            $dbExecution->save();
+            $data[] = $execution;
         }
-        /* $execution = new ContratoEjecucion();
-        $execution->contrato_ejercicio_id = $agreementExercise->id;
-        $execution->mes_id = $request->mes_id;
-        $execution->costo = $request->costo;
-        $execution->save(); */
 
-        return response()->json($executions, Response::HTTP_CREATED);
+        return response()->json($data, Response::HTTP_CREATED);
     }
 
     // Ver ejecucion
@@ -447,60 +354,30 @@ class ContratoController extends Controller
 
         $responsablesOperativos = json_decode($request->header('Responsables'), true);
 
-        if (count($responsablesOperativos) == 0) {
-            $result = Proyecto::select(
-                    'proyectos.id',
-                    'proyectos.numero as proyecto_numero',
-                    'subprogramas.numero as subprograma_numero',
-                    'programas.numero as programa_numero',
-                    'responsables_operativos.numero as responsable_operativo_numero',
-                    'unidades_responsables_gastos.numero as unidad_responsable_numero'
-                )
-                ->join('proyecto_subprograma', 'proyecto_subprograma.proyecto_id', '=', 'proyectos.id')
-                ->join('subprogramas', 'subprogramas.id', '=', 'proyecto_subprograma.subprograma_id')
-                ->join('programa_subprograma', 'programa_subprograma.subprograma_id', '=', 'subprogramas.id')
-                ->join('programas', 'programas.id', '=', 'programa_subprograma.programa_id')
-                ->join('proyecto_responsable_operativo', 'proyecto_responsable_operativo.proyecto_id', '=', 'proyectos.id')
-                ->join('responsables_operativos', 'responsables_operativos.id', '=', 'proyecto_responsable_operativo.responsable_operativo_id')
-                ->join('responsable_operativo_urg', 'responsable_operativo_urg.responsable_operativo_id', '=', 'responsables_operativos.id')
-                ->join('unidades_responsables_gastos', 'unidades_responsables_gastos.id', '=', 'responsable_operativo_urg.unidad_responsable_gasto_id')
-                ->get();
-        } else {
-            $result = Proyecto::select(
-                    'proyectos.id',
-                    'proyectos.numero as proyecto_numero',
-                    'subprogramas.numero as subprograma_numero',
-                    'programas.numero as programa_numero',
-                    'responsables_operativos.numero as responsable_operativo_numero',
-                    'unidades_responsables_gastos.numero as unidad_responsable_numero'
-                )
-                ->join('proyecto_subprograma', 'proyecto_subprograma.proyecto_id', '=', 'proyectos.id')
-                ->join('subprogramas', 'subprogramas.id', '=', 'proyecto_subprograma.subprograma_id')
-                ->join('programa_subprograma', 'programa_subprograma.subprograma_id', '=', 'subprogramas.id')
-                ->join('programas', 'programas.id', '=', 'programa_subprograma.programa_id')
-                ->join('proyecto_responsable_operativo', 'proyecto_responsable_operativo.proyecto_id', '=', 'proyectos.id')
-                ->join('responsables_operativos', 'responsables_operativos.id', '=', 'proyecto_responsable_operativo.responsable_operativo_id')
-                ->join('responsable_operativo_urg', 'responsable_operativo_urg.responsable_operativo_id', '=', 'responsables_operativos.id')
-                ->join('unidades_responsables_gastos', 'unidades_responsables_gastos.id', '=', 'responsable_operativo_urg.unidad_responsable_gasto_id')
-                ->whereIn('responsables_operativos.id', $responsablesOperativos)
-                ->get();
+        $proyectos = Proyecto::join('ejercicio_proyecto', 'proyectos.id', '=', 'ejercicio_proyecto.proyecto_id')
+            ->join('contrato_ejercicio_proyecto','ejercicio_proyecto.id','=','contrato_ejercicio_proyecto.ejercicio_proyecto_id')
+            ->join('ejercicios', 'ejercicio_proyecto.ejercicio_id', '=', 'ejercicios.id')
+            ->join('subprogramas', 'proyectos.subprograma_id', '=', 'subprogramas.id')
+            ->join('programas', 'subprogramas.programa_id', '=', 'programas.id')
+            ->join('responsables_operativos', 'proyectos.responsable_operativo_id', '=', 'responsables_operativos.id')
+            ->join('unidades_responsables_gastos', 'responsables_operativos.unidad_responsable_gasto_id', '=', 'unidades_responsables_gastos.id')
+            ->select(
+                DB::raw('CONCAT(unidades_responsables_gastos.numero, responsables_operativos.numero, programas.numero, subprogramas.numero, proyectos.numero) AS clave'),
+                'ejercicio_proyecto.id'
+            )
+            ->where('ejercicios.id', $exercise);
+
+        if (count($responsablesOperativos) > 0) {
+            $proyectos->whereIn('responsables_operativos.id', $responsablesOperativos);
         }
 
+        $proyectos = $proyectos->get();
         /**
          * Clave
          * URG  RO  PG  SP  PY
          */
-        $keys = $result->map(function ($key) {
-            return [
-                'clave' => $key->unidad_responsable_numero . 
-                    $key->responsable_operativo_numero .
-                    $key->programa_numero .
-                    $key->subprograma_numero .
-                    $key->proyecto_numero
-            ];
-        });
 
-        return response()->json($keys, Response::HTTP_OK);
+        return response()->json($proyectos, Response::HTTP_OK);
     }
 
     // Mostrar la ejecución del contrato en los meses
@@ -510,11 +387,11 @@ class ContratoController extends Controller
 
         if(!$exercise) return response(["message" => "No existe el ejercicio"], Response::HTTP_UNPROCESSABLE_ENTITY);
 
-        $agreementExercise = ContratoEjercicio::where('contrato_id', $id)->where('ejercicio_id', $exercise)->first();
+        $scenario = $request->header('escenario');
 
-        if(!$agreementExercise) return response(["message" => "No hay contrato en este ejercicio"], Response::HTTP_UNPROCESSABLE_ENTITY);
+        if(!$scenario) return response(["message" => "No existe el escenario"], Response::HTTP_UNPROCESSABLE_ENTITY);
 
-        $executions = ContratoEjecucion::where('contrato_ejercicio_id', $agreementExercise->id)->with('mes')->get();
+        $executions = ContratoEjecucion::where('contrato_ejercicio_proyecto_id', $id)->with('mes')->get();
 
         return response()->json($executions, Response::HTTP_OK);
     }
@@ -566,55 +443,38 @@ class ContratoController extends Controller
 
         $responsablesOperativos = json_decode($request->header('Responsables'), true);
 
-        if (count($responsablesOperativos) == 0) {
-            $result = Contrato::join('contrato_ejercicio', 'contratos.id', '=', 'contrato_ejercicio.contrato_id')
-                //->join('versiones', 'versiones.contrato_ejercicio_id', '=', 'contrato_ejercicio.id')
-                ->join('contrato_partida', 'contrato_partida.contrato_ejercicio_id', '=', 'contrato_ejercicio.id')
-                ->join('partidas', 'partidas.id', '=', 'contrato_partida.partida_id')
-                ->join('conceptos', 'conceptos.id', '=', 'partidas.concepto_id')
-                ->join('capitulos', 'capitulos.id', '=', 'conceptos.capitulo_id')
-                ->join('unidades_responsables_gastos', 'unidades_responsables_gastos.numero', '=', DB::raw('SUBSTRING(contratos.clave, 1, 2)'))
+        $contratos = Contrato::join('contrato_ejercicio_proyecto', 'contratos.id', '=', 'contrato_ejercicio_proyecto.contrato_id')
+                ->join('ejercicio_proyecto', 'contrato_ejercicio_proyecto.ejercicio_proyecto_id', '=', 'ejercicio_proyecto.id')
+                ->join('ejercicios', 'ejercicio_proyecto.ejercicio_id', '=', 'ejercicios.id')
+                ->join('partidas', 'contrato_ejercicio_proyecto.partida_id', '=', 'partidas.id')
+                ->join('conceptos', 'partidas.concepto_id', '=', 'conceptos.id')
+                ->join('capitulos', 'conceptos.capitulo_id', '=', 'capitulos.id')
+                ->join('proyectos', 'ejercicio_proyecto.proyecto_id', '=', 'proyectos.id')
+                ->join('subprogramas', 'proyectos.subprograma_id', '=', 'subprogramas.id')
+                ->join('programas', 'subprogramas.programa_id', '=', 'programas.id')
+                ->join('responsables_operativos', 'proyectos.responsable_operativo_id', '=', 'responsables_operativos.id')
+                ->join('unidades_responsables_gastos', 'responsables_operativos.unidad_responsable_gasto_id', '=', 'unidades_responsables_gastos.id')
                 ->select(
-                    'contratos.id',
-                    'contratos.clave',
+                    DB::raw('CONCAT(unidades_responsables_gastos.numero, responsables_operativos.numero, programas.numero, subprogramas.numero, proyectos.numero) AS clave'),
                     'contratos.descripcion',
-                    'contrato_ejercicio.importe',
+                    'contrato_ejercicio_proyecto.importe',
                     'contratos.parcialidad',
                     'contratos.tipo',
                     'partidas.numero as partida',
-                    'conceptos.numero as concepto',
                     'capitulos.capitulo',
+                    'conceptos.numero as concepto',
                     'unidades_responsables_gastos.numero as urg'
                 )
-                ->where('contrato_ejercicio.ejercicio_id', $exercise)
-                ->where('contrato_ejercicio.escenario', $scenario)
-                ->get();
-        } else {
-            $result = Contrato::join('contrato_ejercicio', 'contratos.id', '=', 'contrato_ejercicio.contrato_id')
-                ->join('contrato_partida', 'contrato_partida.contrato_ejercicio_id', '=', 'contrato_ejercicio.id')
-                ->join('partidas', 'partidas.id', '=', 'contrato_partida.partida_id')
-                ->join('conceptos', 'conceptos.id', '=', 'partidas.concepto_id')
-                ->join('capitulos', 'capitulos.id', '=', 'conceptos.capitulo_id')
-                ->join('unidades_responsables_gastos', 'unidades_responsables_gastos.numero', '=', DB::raw('SUBSTRING(contratos.clave, 1, 2)'))
-                ->select(
-                    'contratos.id',
-                    'contratos.clave',
-                    'contratos.descripcion',
-                    'contrato_ejercicio.importe',
-                    'partidas.numero as partida',
-                    'conceptos.numero as concepto',
-                    'capitulos.capitulo',
-                    'unidades_responsables_gastos.numero as urg'
-                )
-                ->where('contrato_ejercicio.ejercicio_id', $exercise)
-                ->where('contrato_ejercicio.escenario', $scenario)
-                ->whereIn(DB::raw('SUBSTRING(contratos.clave, 3, 2)'), $responsablesOperativos)
-                ->get();
+                ->where('ejercicios.id', $exercise)
+                ->where('contrato_ejercicio_proyecto.escenario', $scenario);
+
+        if (count($responsablesOperativos) > 0) {
+            $contratos->whereIn('responsables_operativos.id', $responsablesOperativos);
         }
+         
+        $contratos = $contratos->get();
 
-        $exporter = new Contratos($result->toArray());
-
-        // dd($exporter);
+        $exporter = new Contratos($contratos->toArray());
 
         return $exporter->download("contratos.xlsx");
     }
@@ -629,15 +489,15 @@ class ContratoController extends Controller
 
         if(!$scenario) return response(["message" => "No existe el escenario"], Response::HTTP_UNPROCESSABLE_ENTITY);
 
-        $agreement = Contrato::find($id);
-
-        if(!$agreement) return response(["message" => "No existe el contrato"], Response::HTTP_UNPROCESSABLE_ENTITY);
-
-        $agreementExercise = ContratoEjercicio::where('contrato_id', $id)->where('ejercicio_id', $exercise)->where('escenario', $scenario)->first();
+        $agreementExercise = ContratoEjercicioProyecto::join('ejercicio_proyecto','contrato_ejercicio_proyecto.ejercicio_proyecto_id','=','ejercicio_proyecto.id')
+            ->where('contrato_ejercicio_proyecto.id', $id)
+            ->where('ejercicio_proyecto.ejercicio_id', $exercise)
+            ->where('contrato_ejercicio_proyecto.escenario', $scenario)
+            ->first();
 
         if (!$agreementExercise) return response(["message" => "No existe el contrato en el ejercicio con ese escenario"], Response::HTTP_UNPROCESSABLE_ENTITY);
 
-        $total = ContratoEjecucion::where('contrato_ejercicio_id', $agreementExercise->id)->sum('costo');
+        $total = ContratoEjecucion::where('contrato_ejercicio_proyecto_id', $agreementExercise->id)->sum('costo');
 
         return response()->json($total, Response::HTTP_OK);
     }

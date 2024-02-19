@@ -13,22 +13,21 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::create('contrato_ejecucion', function (Blueprint $table) {
+        Schema::create('responsable_operativo_usuario', function (Blueprint $table) {
             $table->bigIncrements('id');
-            $table->unsignedBigInteger('contrato_ejercicio_proyecto_id');
-            $table->unsignedBigInteger('mes_id');
-            $table->double('costo')->nullable();
+            $table->unsignedBigInteger('responsable_operativo_id');
+            $table->unsignedBigInteger('usuario_id');
             $table->timestamps();
 
-            $table->foreign('contrato_ejercicio_proyecto_id')
+            $table->foreign('responsable_operativo_id')
                 ->references('id')
-                ->on('contrato_ejercicio_proyecto')
+                ->on('responsables_operativos')
                 ->onUpdate('cascade')
                 ->onDelete('restrict');
 
-            $table->foreign('mes_id')
+            $table->foreign('usuario_id')
                 ->references('id')
-                ->on('meses')
+                ->on('usuarios')
                 ->onUpdate('cascade')
                 ->onDelete('restrict');
         });
@@ -41,6 +40,6 @@ return new class extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('contrato_ejecucion');
+        Schema::dropIfExists('responsable_operativo_usuario');
     }
 };

@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Api\v1\CatalogosPOA;
 
 use App\Http\Controllers\Controller;
-use App\Models\ContratoEjercicio;
+use App\Models\ContratoEjercicioProyecto;
 use App\Models\Ejercicio;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -74,8 +74,11 @@ class EjercicioController extends Controller
 
     public function scenarios($id)
     {
-        $scenarios = ContratoEjercicio::where('ejercicio_id', $id)->select('escenario') // Reemplaza 'nombre_del_campo' con el nombre del campo que quieres que sea diferente
-        ->distinct()->get();
+        $scenarios = ContratoEjercicioProyecto::join('ejercicio_proyecto','contrato_ejercicio_proyecto.ejercicio_proyecto_id','=','ejercicio_proyecto.id')
+            ->where('ejercicio_proyecto.ejercicio_id', $id)
+            ->select('escenario')
+            ->distinct()
+            ->get();
 
         if(!$scenarios) return response(["message" => "No existe el ejercicio"], Response::HTTP_UNPROCESSABLE_ENTITY);
 

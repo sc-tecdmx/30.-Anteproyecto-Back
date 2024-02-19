@@ -15,6 +15,8 @@ return new class extends Migration
     {
         Schema::create('proyectos', function (Blueprint $table) {
             $table->bigIncrements('id');
+            $table->unsignedBigInteger('subprograma_id');
+            $table->unsignedBigInteger('responsable_operativo_id');
             $table->char('numero', 3);
             $table->text('nombre');
             $table->string('tipo');
@@ -30,6 +32,18 @@ return new class extends Migration
             $table->string('autorizado_por');
             $table->string('status');
             $table->timestamps();
+
+            $table->foreign('subprograma_id')
+                ->references('id')
+                ->on('subprogramas')
+                ->onUpdate('cascade')
+                ->onDelete('restrict');
+
+            $table->foreign('responsable_operativo_id')
+                ->references('id')
+                ->on('responsables_operativos')
+                ->onUpdate('cascade')
+                ->onDelete('restrict');
         });
     }
 

@@ -17,6 +17,7 @@ use App\Exports\ContratosPartidas;
 use App\Exports\ContratosProyectos;
 use App\Exports\ContratosProyectos1;
 use App\Exports\ContratosVersiones;
+use App\Models\ContratoEjercicioProyecto;
 use App\Models\Ejercicio;
 use App\Models\Mes;
 use App\Models\Partida;
@@ -107,15 +108,15 @@ class ReporteContratoController extends Controller
         $year = Ejercicio::find($exercise);
 
         // $responsablesOperativos = json_decode($request->header('Responsables'), true);
-        $budget = Contrato::join('contrato_ejercicio', 'contratos.id', '=', 'contrato_ejercicio.contrato_id')
-            ->join('contrato_partida', 'contrato_partida.contrato_ejercicio_id', '=', 'contrato_ejercicio.id')
-            ->join('partidas', 'partidas.id', '=', 'contrato_partida.partida_id')
+        $budget = Contrato::join('contrato_ejercicio_proyecto', 'contratos.id', '=', 'contrato_ejercicio_proyecto.contrato_id')
+            ->join('ejercicio_proyecto','contrato_ejercicio_proyecto.ejercicio_proyecto_id','=','ejercicio_proyecto.id')
+            ->join('partidas', 'partidas.id', '=', 'contrato_ejercicio_proyecto.partida_id')
             ->join('conceptos', 'conceptos.id', '=', 'partidas.concepto_id')
             ->join('capitulos', 'capitulos.id', '=', 'conceptos.capitulo_id')
-            ->where('contrato_ejercicio.ejercicio_id', $exercise)
-            ->where('contrato_ejercicio.escenario', $scenario)
+            ->where('ejercicio_proyecto.ejercicio_id', $exercise)
+            ->where('contrato_ejercicio_proyecto.escenario', $scenario)
             ->whereIn('capitulos.id', [1,2,3,5])
-            ->sum('contrato_ejercicio.importe');
+            ->sum('contrato_ejercicio_proyecto.importe');
         
         //$chapters = Capitulo::take(5)->get();
         $chapters = Capitulo::whereIn('id', [1,2,3,5])->get();
@@ -126,15 +127,15 @@ class ReporteContratoController extends Controller
         $porcentajeGastoCorriente = 0;
 
         foreach ($chapters as $chapter) {
-            $total = Contrato::join('contrato_ejercicio', 'contratos.id', '=', 'contrato_ejercicio.contrato_id')
-                ->join('contrato_partida', 'contrato_partida.contrato_ejercicio_id', '=', 'contrato_ejercicio.id')
-                ->join('partidas', 'partidas.id', '=', 'contrato_partida.partida_id')
+            $total = Contrato::join('contrato_ejercicio_proyecto', 'contratos.id', '=', 'contrato_ejercicio_proyecto.contrato_id')
+                ->join('ejercicio_proyecto','contrato_ejercicio_proyecto.ejercicio_proyecto_id','=','ejercicio_proyecto.id')
+                ->join('partidas', 'partidas.id', '=', 'contrato_ejercicio_proyecto.partida_id')
                 ->join('conceptos', 'conceptos.id', '=', 'partidas.concepto_id')
                 ->join('capitulos', 'capitulos.id', '=', 'conceptos.capitulo_id')
-                ->where('contrato_ejercicio.ejercicio_id', '=', $exercise)
-                ->where('contrato_ejercicio.escenario', '=', $scenario)
+                ->where('ejercicio_proyecto.ejercicio_id', '=', $exercise)
+                ->where('contrato_ejercicio_proyecto.escenario', '=', $scenario)
                 ->where('capitulos.capitulo', '=', $chapter->capitulo)
-                ->sum('contrato_ejercicio.importe');
+                ->sum('contrato_ejercicio_proyecto.importe');
             
             $porcentaje = ($total * 100) / $budget;
 
@@ -172,15 +173,15 @@ class ReporteContratoController extends Controller
         $year = Ejercicio::find($exercise);
 
         // $responsablesOperativos = json_decode($request->header('Responsables'), true);
-        $budget = Contrato::join('contrato_ejercicio', 'contratos.id', '=', 'contrato_ejercicio.contrato_id')
-            ->join('contrato_partida', 'contrato_partida.contrato_ejercicio_id', '=', 'contrato_ejercicio.id')
-            ->join('partidas', 'partidas.id', '=', 'contrato_partida.partida_id')
+        $budget = Contrato::join('contrato_ejercicio_proyecto', 'contratos.id', '=', 'contrato_ejercicio_proyecto.contrato_id')
+            ->join('ejercicio_proyecto','contrato_ejercicio_proyecto.ejercicio_proyecto_id','=','ejercicio_proyecto.id')
+            ->join('partidas', 'partidas.id', '=', 'contrato_ejercicio_proyecto.partida_id')
             ->join('conceptos', 'conceptos.id', '=', 'partidas.concepto_id')
             ->join('capitulos', 'capitulos.id', '=', 'conceptos.capitulo_id')
-            ->where('contrato_ejercicio.ejercicio_id', $exercise)
-            ->where('contrato_ejercicio.escenario', $scenario)
+            ->where('ejercicio_proyecto.ejercicio_id', $exercise)
+            ->where('contrato_ejercicio_proyecto.escenario', $scenario)
             ->whereIn('capitulos.id', [1,2,3,5])
-            ->sum('contrato_ejercicio.importe');
+            ->sum('contrato_ejercicio_proyecto.importe');
         
         //$chapters = Capitulo::take(5)->get();
         $chapters = Capitulo::whereIn('id', [1,2,3,5])->get();
@@ -197,15 +198,15 @@ class ReporteContratoController extends Controller
                 $response['capitulos'][$chapter->id]['conceptos'][$concept->id]['numero'] = $concept->numero;
                 $response['capitulos'][$chapter->id]['conceptos'][$concept->id]['descripcion'] = $concept->descripcion;
 
-                $subtotalConcept = Contrato::join('contrato_ejercicio', 'contratos.id', '=', 'contrato_ejercicio.contrato_id')
-                    ->join('contrato_partida', 'contrato_partida.contrato_ejercicio_id', '=', 'contrato_ejercicio.id')
-                    ->join('partidas', 'partidas.id', '=', 'contrato_partida.partida_id')
+                $subtotalConcept = Contrato::join('contrato_ejercicio_proyecto', 'contratos.id', '=', 'contrato_ejercicio_proyecto.contrato_id')
+                    ->join('ejercicio_proyecto','contrato_ejercicio_proyecto.ejercicio_proyecto_id','=','ejercicio_proyecto.id')
+                    ->join('partidas', 'partidas.id', '=', 'contrato_ejercicio_proyecto.partida_id')
                     ->join('conceptos', 'conceptos.id', '=', 'partidas.concepto_id')
                     ->join('capitulos', 'capitulos.id', '=', 'conceptos.capitulo_id')
-                    ->where('contrato_ejercicio.ejercicio_id', '=', $exercise)
-                    ->where('contrato_ejercicio.escenario', '=', $scenario)
+                    ->where('ejercicio_proyecto.ejercicio_id', '=', $exercise)
+                    ->where('contrato_ejercicio_proyecto.escenario', '=', $scenario)
                     ->where('conceptos.id', '=', $concept->id)
-                    ->sum('contrato_ejercicio.importe');
+                    ->sum('contrato_ejercicio_proyecto.importe');
                 
                 $response['capitulos'][$chapter->id]['conceptos'][$concept->id]['subtotal'] = $subtotalConcept;
                 $subtotalChapter += $subtotalConcept;
@@ -213,7 +214,7 @@ class ReporteContratoController extends Controller
             $response['capitulos'][$chapter->id]['subtotal'] = $subtotalChapter;
         }
 
-        //return response()->json($response, Response::HTTP_OK);
+        // return response()->json($response, Response::HTTP_OK);
         $exporter = new CapitulosConceptos($response);
 
         // dd($exporter);
@@ -234,15 +235,15 @@ class ReporteContratoController extends Controller
         $year = Ejercicio::find($exercise);
 
         // $responsablesOperativos = json_decode($request->header('Responsables'), true);
-        $budget = Contrato::join('contrato_ejercicio', 'contratos.id', '=', 'contrato_ejercicio.contrato_id')
-            ->join('contrato_partida', 'contrato_partida.contrato_ejercicio_id', '=', 'contrato_ejercicio.id')
-            ->join('partidas', 'partidas.id', '=', 'contrato_partida.partida_id')
+        $budget = Contrato::join('contrato_ejercicio_proyecto', 'contratos.id', '=', 'contrato_ejercicio_proyecto.contrato_id')
+            ->join('ejercicio_proyecto','contrato_ejercicio_proyecto.ejercicio_proyecto_id','=','ejercicio_proyecto.id')
+            ->join('partidas', 'partidas.id', '=', 'contrato_ejercicio_proyecto.partida_id')
             ->join('conceptos', 'conceptos.id', '=', 'partidas.concepto_id')
             ->join('capitulos', 'capitulos.id', '=', 'conceptos.capitulo_id')
-            ->where('contrato_ejercicio.ejercicio_id', $exercise)
-            ->where('contrato_ejercicio.escenario', $scenario)
+            ->where('ejercicio_proyecto.ejercicio_id', $exercise)
+            ->where('contrato_ejercicio_proyecto.escenario', $scenario)
             ->whereIn('capitulos.id', [1,2,3,5])
-            ->sum('contrato_ejercicio.importe');
+            ->sum('contrato_ejercicio_proyecto.importe');
         
         //$chapters = Capitulo::take(5)->get();
         $chapters = Capitulo::whereIn('id', [1,2,3,5])->get();
@@ -256,12 +257,12 @@ class ReporteContratoController extends Controller
             $splits = Partida::select('partidas.id', 'partidas.concepto_id', 'partidas.numero', 'partidas.descripcion')
                 ->join('conceptos', 'partidas.concepto_id', '=', 'conceptos.id')
                 ->join('capitulos', 'conceptos.capitulo_id', '=', 'capitulos.id')
-                ->join('contrato_partida', 'partidas.id', '=', 'contrato_partida.partida_id')
-                ->join('contrato_ejercicio', 'contrato_partida.contrato_ejercicio_id', '=', 'contrato_ejercicio.id')
-                ->where('contrato_ejercicio.ejercicio_id', $exercise)
-                ->where('contrato_ejercicio.escenario', $scenario)
+                ->join('contrato_ejercicio_proyecto', 'partidas.id', '=', 'contrato_ejercicio_proyecto.partida_id')
+                ->join('ejercicio_proyecto','contrato_ejercicio_proyecto.ejercicio_proyecto_id','=','ejercicio_proyecto.id')
+                ->where('ejercicio_proyecto.ejercicio_id', $exercise)
+                ->where('contrato_ejercicio_proyecto.escenario', $scenario)
                 ->where('capitulos.id', $chapter->id)
-                ->where('contrato_ejercicio.importe', '>', 0)
+                ->where('contrato_ejercicio_proyecto.importe', '>', 0)
                 ->groupBy('partidas.id', 'partidas.concepto_id', 'partidas.numero', 'partidas.descripcion')
                 ->orderBy('partidas.id')
                 ->get();
@@ -273,19 +274,21 @@ class ReporteContratoController extends Controller
                 $response['capitulos'][$chapter->id]['partidas'][$split->id]['descripcion'] = $split->descripcion;
 
                 $subtotalSplit = DB::table('contratos')
-                    ->join('contrato_ejercicio', 'contratos.id', '=', 'contrato_ejercicio.contrato_id')
-                    ->join('contrato_partida', 'contrato_ejercicio.id', '=', 'contrato_partida.contrato_ejercicio_id')
-                    ->join('partidas', 'contrato_partida.partida_id', '=', 'partidas.id')
+                    ->join('contrato_ejercicio_proyecto', 'contratos.id', '=', 'contrato_ejercicio_proyecto.contrato_id')
+                    ->join('ejercicio_proyecto','contrato_ejercicio_proyecto.ejercicio_proyecto_id','=','ejercicio_proyecto.id')
+                    ->join('partidas', 'contrato_ejercicio_proyecto.partida_id', '=', 'partidas.id')
                     ->where('partidas.id', $split->id)
-                    ->where('contrato_ejercicio.ejercicio_id', $exercise)
-                    ->where('contrato_ejercicio.escenario', $scenario)
-                    ->sum('contrato_ejercicio.importe');
+                    ->where('ejercicio_proyecto.ejercicio_id', $exercise)
+                    ->where('contrato_ejercicio_proyecto.escenario', $scenario)
+                    ->sum('contrato_ejercicio_proyecto.importe');
                 
                 $response['capitulos'][$chapter->id]['partidas'][$split->id]['subtotal'] = $subtotalSplit;
                 $subtotalChapter += $subtotalSplit;
             }
             $response['capitulos'][$chapter->id]['subtotal'] = $subtotalChapter;
         }
+
+        // return response()->json($response, Response::HTTP_OK);
 
         $exporter = new ContratosPartidas($response);
 
@@ -302,31 +305,37 @@ class ReporteContratoController extends Controller
 
         if(!$scenario) return response(["message" => "No existe el escenario"], Response::HTTP_UNPROCESSABLE_ENTITY);
 
-        /* $budget = Contrato::join('contrato_ejercicio', 'contratos.id', '=', 'contrato_ejercicio.contrato_id')
-            ->where('contrato_ejercicio.ejercicio_id', $exercise)
-            ->where('contrato_ejercicio.escenario', $scenario)
-            ->sum('contrato_ejercicio.importe'); */
-        
-        $agreements = Contrato::join('contrato_ejercicio', 'contratos.id', '=', 'contrato_ejercicio.contrato_id')
-            ->where('contrato_ejercicio.ejercicio_id', $exercise)
-            ->where('contrato_ejercicio.escenario', $scenario)
-            ->orderBy('contratos.clave')
+        $proyectos = Proyecto::join('ejercicio_proyecto', 'proyectos.id', '=', 'ejercicio_proyecto.proyecto_id')
+            ->join('contrato_ejercicio_proyecto', 'ejercicio_proyecto.id', '=', 'contrato_ejercicio_proyecto.ejercicio_proyecto_id')
+            ->join('subprogramas', 'proyectos.subprograma_id', '=', 'subprogramas.id')
+            ->join('programas', 'subprogramas.programa_id', '=', 'programas.id')
+            ->join('responsables_operativos', 'proyectos.responsable_operativo_id', '=', 'responsables_operativos.id')
+            ->join('unidades_responsables_gastos', 'responsables_operativos.unidad_responsable_gasto_id', '=', 'unidades_responsables_gastos.id')
+            ->select(
+                DB::raw('CONCAT(unidades_responsables_gastos.numero, responsables_operativos.numero, programas.numero, subprogramas.numero, proyectos.numero) AS clave'),
+                'proyectos.descripcion',
+                'ejercicio_proyecto.id'
+            )
+            ->where('ejercicio_proyecto.ejercicio_id', $exercise)
+            ->where('contrato_ejercicio_proyecto.escenario', $scenario)
+            ->distinct() // Añadimos el método distinct() para obtener solo resultados únicos
             ->get();
 
         $totals = [];
         $budget = 0;
 
-        foreach ($agreements as $agreement) {
-            $clave = $agreement->clave;
-            $total = $agreement->importe;
-            $budget = $total + $budget;
-
-            // Si la clave del contrato ya existe en el arreglo, sumar el total
-            if (array_key_exists($clave, $totals)) {
-                $totals[$clave] += $total;
-            } else { // Si la clave del contrato no existe en el arreglo, crearla con el total
-                $totals[$clave] = $total;
-            }
+        foreach ($proyectos as $proyecto) {
+            $totalProyecto = ContratoEjercicioProyecto::join('ejercicio_proyecto', 'contrato_ejercicio_proyecto.ejercicio_proyecto_id','=','ejercicio_proyecto.id')
+                ->where('ejercicio_proyecto_id',$proyecto->id)
+                ->where('ejercicio_proyecto.ejercicio_id', $exercise)
+                ->where('contrato_ejercicio_proyecto.escenario', $scenario)
+                ->sum('importe');
+            $budget += $totalProyecto;
+            $totals[] = [
+                'clave' => $proyecto->clave,
+                'descripcion' => $proyecto->descripcion,
+                'total' => $totalProyecto
+            ];
         }
 
         /* $data = [
@@ -335,7 +344,6 @@ class ReporteContratoController extends Controller
         ];
 
         return response()->json($data, Response::HTTP_OK); */
-
 
         $exporter = new ContratosProyectos($totals, $budget);
 

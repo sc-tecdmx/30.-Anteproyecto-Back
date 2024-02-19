@@ -15,9 +15,16 @@ return new class extends Migration
     {
         Schema::create('responsables_operativos', function (Blueprint $table) {
             $table->bigIncrements('id');
+            $table->unsignedBigInteger('unidad_responsable_gasto_id');
             $table->char('numero', 2);
             $table->string('nombre');
             $table->timestamps();
+
+            $table->foreign('unidad_responsable_gasto_id')
+                ->references('id')
+                ->on('unidades_responsables_gastos')
+                ->onUpdate('cascade')
+                ->onDelete('restrict');
         });
     }
 

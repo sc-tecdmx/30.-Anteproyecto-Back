@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Api\v1\CatalogosPOA;
 
 use App\Http\Controllers\Controller;
-use App\Models\ContratoEjercicio;
+use App\Models\ContratoEjercicioProyecto;
 use App\Models\UnidadResponsableGasto;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -56,10 +56,15 @@ class UnidadResponsableGastoController extends Controller
         $data = [];
 
         foreach($urgs as $urg) {
-            $agrements = ContratoEjercicio::where('ejercicio_id', $exercise)->where('escenario', $scenario)->where('cerrado', 1)
-                ->join('contratos', 'contrato_ejercicio.contrato_id','=','contratos.id')
-                ->join('unidades_responsables_gastos', 'unidades_responsables_gastos.numero', '=', DB::raw('SUBSTRING(contratos.clave, 1, 2)'))
-                ->where(DB::raw('SUBSTRING(contratos.clave, 1, 2)'), $urg->numero)
+            $agrements = ContratoEjercicioProyecto::join('ejercicio_proyecto','contrato_ejercicio_proyecto.ejercicio_proyecto_id','=','ejercicio_proyecto.id')
+                ->join('proyectos','ejercicio_proyecto.proyecto_id','=','proyectos.id')
+                ->join('responsables_operativos','proyectos.responsable_operativo_id','=','responsables_operativos.id')
+                ->join('unidades_responsables_gastos','responsables_operativos.unidad_responsable_gasto_id','=','unidades_responsables_gastos.id')
+                ->join('contratos', 'contrato_ejercicio_proyecto.contrato_id','=','contratos.id')
+                ->where('ejercicio_proyecto.ejercicio_id', $exercise)
+                ->where('contrato_ejercicio_proyecto.escenario', $scenario)
+                ->where('contrato_ejercicio_proyecto.cerrado', 1)
+                ->where('unidades_responsables_gastos.id', $urg->id)
                 ->get();
             if (!$agrements->isEmpty()) {
                 $data[] = [
@@ -91,15 +96,22 @@ class UnidadResponsableGastoController extends Controller
 
         if(!$scenario) return response(["message" => "No existe el escenario"], Response::HTTP_UNPROCESSABLE_ENTITY);
 
-        $unit = UnidadResponsableGasto::find($id);
-
-        $agrements = ContratoEjercicio::where('ejercicio_id', $exercise)->where('escenario', $scenario)
-                ->join('contratos', 'contrato_ejercicio.contrato_id','=','contratos.id')
-                ->join('unidades_responsables_gastos', 'unidades_responsables_gastos.numero', '=', DB::raw('SUBSTRING(contratos.clave, 1, 2)'))
-                ->where(DB::raw('SUBSTRING(contratos.clave, 1, 2)'), $unit->numero)
-                ->get();
+        $agrements = ContratoEjercicioProyecto::join('ejercicio_proyecto','contrato_ejercicio_proyecto.ejercicio_proyecto_id','=','ejercicio_proyecto.id')
+            ->join('proyectos','ejercicio_proyecto.proyecto_id','=','proyectos.id')
+            ->join('responsables_operativos','proyectos.responsable_operativo_id','=','responsables_operativos.id')
+            ->join('unidades_responsables_gastos','responsables_operativos.unidad_responsable_gasto_id','=','unidades_responsables_gastos.id')
+            ->join('contratos', 'contrato_ejercicio_proyecto.contrato_id','=','contratos.id')
+            ->where('ejercicio_proyecto.ejercicio_id', $exercise)
+            ->where('contrato_ejercicio_proyecto.escenario', $scenario)
+            ->where('unidades_responsables_gastos.id', $id)
+            ->get();
         
         foreach ($agrements as $agreement) {
+            $agreement = ContratoEjercicioProyecto::join('ejercicio_proyecto','contrato_ejercicio_proyecto.ejercicio_proyecto_id','=','ejercicio_proyecto.id')
+                ->where('ejercicio_proyecto.ejercicio_id', $exercise)
+                ->where('contrato_ejercicio_proyecto.escenario', $scenario)
+                ->where('contrato_ejercicio_proyecto.id', $agreement->id)
+                ->first();
             $agreement->cerrado = $request->state;
             $agreement->save();
         }

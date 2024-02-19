@@ -4,7 +4,6 @@ use App\Http\Controllers\Api\v1\Autenticacion\AutenticacionController;
 use App\Http\Controllers\Api\v1\Catalogos\CapituloController;
 use App\Http\Controllers\Api\v1\Catalogos\ConceptoController;
 use App\Http\Controllers\Api\v1\Catalogos\MesController;
-use App\Http\Controllers\Api\v1\Catalogos\PartidaCapituloController;
 use App\Http\Controllers\Api\v1\Catalogos\PartidaController;
 use App\Http\Controllers\Api\v1\Catalogos\UnidadMedidaController;
 use App\Http\Controllers\Api\v1\CatalogosPOA\AreaController;
@@ -80,13 +79,6 @@ Route::group(['prefix' => 'v1/', 'namespace' => 'Api'], function () {
         Route::get('/', [CapituloController::class, 'index']);
         Route::get('/{id}', [CapituloController::class, 'show']);
         Route::post('/', [CapituloController::class, 'store']);
-    });
-
-    Route::prefix('capitulos-partidas')->group(function () {
-        Route::get('/', [PartidaCapituloController::class, 'index']);
-        Route::get('/{id}', [PartidaCapituloController::class, 'show']);
-        Route::get('/detalle/{id}', [PartidaCapituloController::class, 'partidaCapitulo']);
-        Route::post('/', [PartidaCapituloController::class, 'store']);
     });
 
     Route::prefix('conceptos')->group(function () {

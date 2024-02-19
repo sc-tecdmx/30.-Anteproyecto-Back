@@ -15,9 +15,16 @@ return new class extends Migration
     {
         Schema::create('subprogramas', function (Blueprint $table) {
             $table->bigIncrements('id');
+            $table->unsignedBigInteger('programa_id');
             $table->char('numero', 2);
             $table->string('nombre');
             $table->timestamps();
+
+            $table->foreign('programa_id')
+                ->references('id')
+                ->on('programas')
+                ->onUpdate('cascade')
+                ->onDelete('restrict');
         });
     }
 

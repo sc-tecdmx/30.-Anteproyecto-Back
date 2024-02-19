@@ -15,9 +15,7 @@ return new class extends Migration
     {
         Schema::create('contratos', function (Blueprint $table) {
             $table->bigIncrements('id');
-            $table->char('clave', 10);
             $table->string('descripcion');
-            $table->float('importe');
             $table->string('parcialidad');
             $table->char('tipo', 1);
             $table->timestamps();

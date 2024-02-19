@@ -76,7 +76,8 @@ class AutenticacionController extends Controller
             $request->filled('remember')
         )) {
             $user = Auth::user();
-            $roles = $user->roles()->get();
+            $rol = $user->rol()->get();
+
             $formatedUser = [
                 'id' => $user->id,
                 'nombre' => $user->nombre,
@@ -84,7 +85,7 @@ class AutenticacionController extends Controller
                 'apellido_materno' => $user->apellido_materno,
                 'usuario' => $user->usuario,
                 'email' => $user->email,
-                'rol' => $roles->isEmpty() ? null : $roles[0]->id,
+                'rol' => $user->rol_id == '' ? null : $rol[0]->id,
             ]; 
             $responsablesIds = $user->responsablesOperativos->pluck('id')->toArray();
             $token = $user->createToken('token')->plainTextToken;

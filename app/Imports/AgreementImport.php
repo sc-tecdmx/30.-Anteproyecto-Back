@@ -4,14 +4,13 @@ namespace App\Imports;
 
 use App\Models\Contrato;
 use App\Models\ContratoEjecucion;
-use App\Models\ContratoEjercicio;
-use App\Models\ContratoPartida;
+use App\Models\ContratoEjercicioProyecto;
 use App\Models\Partida;
-use Illuminate\Support\Collection;
-use Maatwebsite\Excel\Concerns\ToCollection;
+use App\Models\Proyecto;
 use Maatwebsite\Excel\Concerns\ToModel;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
 use Maatwebsite\Excel\Concerns\WithValidation;
+use Illuminate\Support\Facades\DB;
 
 class AgreementImport implements ToModel, WithHeadingRow, WithValidation
 {
@@ -46,31 +45,52 @@ class AgreementImport implements ToModel, WithHeadingRow, WithValidation
     public function model(array $row)
     {
         $agreement = Contrato::create([
-            'clave' => $row['clave'],
             'descripcion' => $row['descripcion'],
             'parcialidad' => $row['parcialidad'],
             'tipo' => $row['tipo']
         ]);
 
-        $agreementExercise = ContratoEjercicio::create([
-            'ejercicio_id' => $this->exercise,
+        $clave = $row['clave'];
+
+        $project = Proyecto::join('ejercicio_proyecto', 'ejercicio_proyecto.proyecto_id', '=', 'proyectos.id')
+            ->join('ejercicios', 'ejercicios.id', '=', 'ejercicio_proyecto.ejercicio_id')
+            ->join('subprogramas', 'subprogramas.id', '=', 'proyectos.subprograma_id')
+            ->join('programas', 'programas.id', '=', 'subprogramas.programa_id')
+            ->join('responsables_operativos', 'responsables_operativos.id', '=', 'proyectos.responsable_operativo_id')
+            ->join('unidades_responsables_gastos', 'unidades_responsables_gastos.id', '=', 'responsables_operativos.unidad_responsable_gasto_id')
+            ->select(DB::raw("
+                CONCAT(
+                    unidades_responsables_gastos.numero,
+                    responsables_operativos.numero,
+                    programas.numero,
+                    subprogramas.numero,
+                    proyectos.numero
+                ) AS clave,
+                ejercicio_proyecto.id
+            "))
+            ->where('ejercicio_proyecto.ejercicio_id', $this->exercise)
+            ->whereRaw("CONCAT(unidades_responsables_gastos.numero, responsables_operativos.numero, programas.numero, subprogramas.numero, proyectos.numero) = '$clave'")
+            ->first();
+        
+        if(!$project) {
+            dd($clave);
+        }
+
+        $split = Partida::where('numero', $row['partida'])->first();
+
+        $agreementExercise = ContratoEjercicioProyecto::create([
+            'ejercicio_proyecto_id' => $project->id,
             'contrato_id' => $agreement->id,
+            'partida_id' => $split->id,
             'importe' => $row['importe'],
             'escenario' => $this->scenario,
             'cerrado' => 0,
             'seleccionado' => 0
         ]);
 
-        $split = Partida::where('numero', $row['partida'])->first();
-
-        $agreementSplit = ContratoPartida::create([
-            'contrato_ejercicio_id' => $agreementExercise->id,
-            'partida_id' => $split->id
-        ]);
-
         for ($mes = 1; $mes <= 12; $mes++) {
             ContratoEjecucion::create([
-                'contrato_ejercicio_id' => $agreementExercise->id,
+                'contrato_ejercicio_proyecto_id' => $agreementExercise->id,
                 'mes_id' => $mes,
                 'costo' => $row[$this->nombre_del_mes($mes)],
             ]);
@@ -82,7 +102,7 @@ class AgreementImport implements ToModel, WithHeadingRow, WithValidation
     public function rules(): array
     {
         return [
-            'clave' => 'required|min:10|max:10',
+            'clave' => 'required',
             'descripcion' => 'required',
             'parcialidad' => 'required',
             'tipo' => 'required',

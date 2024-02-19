@@ -10,8 +10,9 @@ use Maatwebsite\Excel\Concerns\FromView;
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
 use Maatwebsite\Excel\Concerns\WithColumnFormatting;
+use Maatwebsite\Excel\Concerns\WithColumnWidths;
 
-class ContratosProyectos implements FromView, ShouldAutoSize, WithColumnFormatting
+class ContratosProyectos implements FromView, ShouldAutoSize, WithColumnFormatting, WithColumnWidths
 {
     use Exportable;
 
@@ -23,6 +24,13 @@ class ContratosProyectos implements FromView, ShouldAutoSize, WithColumnFormatti
     {
         $this->agreements = $agreements;
         $this->budget = $budget;
+    }
+
+    public function columnWidths(): array
+    {
+        return [
+            'B' => 165
+        ];
     }
 
     public function columnFormats(): array
