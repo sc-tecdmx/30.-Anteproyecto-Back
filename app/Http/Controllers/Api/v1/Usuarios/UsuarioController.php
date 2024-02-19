@@ -36,7 +36,7 @@ class UsuarioController extends Controller
 
     public function show($id)
     {
-        $user = Usuario::with('roles', 'areas', 'responsablesOperativos')->find($id);
+        $user = Usuario::with('rol', 'area', 'responsablesOperativos')->find($id);
 
         if ($user) {
             return response()->json($user, Response::HTTP_OK);
