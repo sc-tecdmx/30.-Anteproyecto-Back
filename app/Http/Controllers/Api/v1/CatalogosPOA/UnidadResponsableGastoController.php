@@ -86,7 +86,7 @@ class UnidadResponsableGastoController extends Controller
         return response($data, Response::HTTP_OK);
     }
 
-    public function updateState(Request $request, $id)
+    public function updateState($id, Request $request)
     {
         $exercise = $request->header('ejercicio');
 
@@ -100,18 +100,14 @@ class UnidadResponsableGastoController extends Controller
             ->join('proyectos','ejercicio_proyecto.proyecto_id','=','proyectos.id')
             ->join('responsables_operativos','proyectos.responsable_operativo_id','=','responsables_operativos.id')
             ->join('unidades_responsables_gastos','responsables_operativos.unidad_responsable_gasto_id','=','unidades_responsables_gastos.id')
-            ->join('contratos', 'contrato_ejercicio_proyecto.contrato_id','=','contratos.id')
+            ->select('contrato_ejercicio_proyecto.*')
             ->where('ejercicio_proyecto.ejercicio_id', $exercise)
             ->where('contrato_ejercicio_proyecto.escenario', $scenario)
             ->where('unidades_responsables_gastos.id', $id)
             ->get();
-        
+
         foreach ($agrements as $agreement) {
-            $agreement = ContratoEjercicioProyecto::join('ejercicio_proyecto','contrato_ejercicio_proyecto.ejercicio_proyecto_id','=','ejercicio_proyecto.id')
-                ->where('ejercicio_proyecto.ejercicio_id', $exercise)
-                ->where('contrato_ejercicio_proyecto.escenario', $scenario)
-                ->where('contrato_ejercicio_proyecto.id', $agreement->id)
-                ->first();
+            $agreement = ContratoEjercicioProyecto::find($agreement->id);
             $agreement->cerrado = $request->state;
             $agreement->save();
         }
